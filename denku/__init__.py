@@ -7,7 +7,7 @@ from .denku import (
     shift_all_colors, split_on_chunks, do_multiprocess, load_json, slerp
 )
 
-__version__ = '0.2.21'
+__version__ = '0.0.1'
 
 __all__ = [
     'download_image', 'show_image', 'show_images',

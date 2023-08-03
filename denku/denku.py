@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+import glob
 import json
 import requests
 import multiprocessing as mp
@@ -50,6 +52,27 @@ def show_images(images, n_rows=1, titles=None, figsize=(5, 5),
             ax.set_ylabel(ylabel)
             ax.axis(axis)
         plt.show()
+
+
+def get_img_names(folder, img_format='png'):
+    img_paths = glob.glob(os.path.join(folder, f'*.{img_format}'))
+    img_names = [os.path.basename(x) for x in img_paths]
+    return img_names
+
+
+def read_image(img_path: str, to_rgb: bool = True,
+               flag: int = cv2.IMREAD_COLOR) -> np.array:
+    '''
+    img_path: path to image
+    to_rgb: apply cv2.COLOR_BGR2RGB or not
+    flag: [cv2.IMREAD_COLOR, cv2.IMREAD_GRAYSCALE, cv2.IMREAD_UNCHANGED]
+    '''
+    image = cv2.imread(img_path, flag)
+    if image is None:
+        raise FileNotFoundError(f'{img_path}')
+    if to_rgb:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
 
 
 def apply_mask_with_gauss(bg_img, src_img, mask,
@@ -119,16 +142,16 @@ def change_contrast(input_img, contrast=0):
 def clear_noise(image):
     img = image.copy()
 
-    c_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    dilate = cv2.morphologyEx(img, cv2.MORPH_DILATE, c_kernel)
-
     e_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    erose = cv2.morphologyEx(dilate, cv2.MORPH_ERODE, e_kernel)
+    erode = cv2.morphologyEx(img, cv2.MORPH_ERODE, e_kernel)
 
-    return erose
+    c_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    dilate = cv2.morphologyEx(erode, cv2.MORPH_DILATE, c_kernel)
+
+    return dilate
 
 
-def resize_if_need(image, max_h, max_w):
+def resize_proportional(image, max_h, max_w):
     img = image.copy()
     img_h, img_w, img_c = img.shape
     coef = 1 if img_h <= max_h and img_w <= max_w else max(
@@ -139,7 +162,7 @@ def resize_if_need(image, max_h, max_w):
     return img
 
 
-def make_img_padding(image, max_h, max_w):
+def make_image_padding(image, max_h, max_w):
     img = image.copy()
     img_h, img_w, img_c = img.shape
     max_h = max(img_h, max_h)
