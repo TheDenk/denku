@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import requests
 import multiprocessing as mp
@@ -11,11 +12,12 @@ from matplotlib import pyplot as plt
 def download_image(url):
     image = PIL.Image.open(requests.get(url, stream=True).raw)
     image = PIL.ImageOps.exif_transpose(image)
-    image = image.convert("RGB")
+    image = image.convert('RGB')
     return image
 
 
-def show_image(image, figsize=(5, 5), cmap=None, title='', xlabel=None, ylabel=None, axis=False):
+def show_image(image, figsize=(5, 5), cmap=None, title='',
+               xlabel=None, ylabel=None, axis=False):
     plt.figure(figsize=figsize)
     plt.imshow(image, cmap=cmap)
     plt.title(title)
@@ -25,16 +27,19 @@ def show_image(image, figsize=(5, 5), cmap=None, title='', xlabel=None, ylabel=N
     plt.show()
 
 
-def show_images(images, n_rows=1, titles=None, figsize=(5, 5), cmap=None, xlabel=None, ylabel=None, axis=False):
+def show_images(images, n_rows=1, titles=None, figsize=(5, 5),
+                cmap=None, xlabel=None, ylabel=None, axis=False):
     n_cols = len(images) // n_rows
     if n_rows == n_cols == 1:
         if isinstance(titles, str) or titles is None:
             title = titles
         if isinstance(titles, list):
             title = titles[0]
-        show_image(images[0], title=title, figsize=figsize, cmap=cmap, xlabel=xlabel, ylabel=ylabel, axis=axis)
+        show_image(images[0], title=title, figsize=figsize,
+                   cmap=cmap, xlabel=xlabel, ylabel=ylabel, axis=axis)
     else:
-        titles = titles if isinstance(titles, list) else ['' for _ in range(len(images))]
+        titles = titles if isinstance(titles, list) else [
+            '' for _ in range(len(images))]
         fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
         fig.tight_layout(pad=0.0)
         axes = axes.flatten()
@@ -47,11 +52,14 @@ def show_images(images, n_rows=1, titles=None, figsize=(5, 5), cmap=None, xlabel
         plt.show()
 
 
-def apply_mask_with_gauss(bg_img, src_img, mask, kernel=(7, 7), sigma=0.0, alpha=0.5):
+def apply_mask_with_gauss(bg_img, src_img, mask,
+                          kernel=(7, 7), sigma=0.0, alpha=0.5):
     mask = mask.astype(np.float32)
     b_mask = cv2.GaussianBlur(mask, kernel, sigma)
-    b_mask = b_mask[:,:, None]
-    out_image = bg_img.astype(np.float32) * (1.0 - b_mask*alpha) + src_img.astype(np.float32) * b_mask*alpha
+    b_mask = b_mask[:, :, None]
+    out_image = bg_img.astype(np.float32)
+    out_image = out_image * (1.0 - b_mask*alpha) + \
+        src_img.astype(np.float32) * b_mask*alpha
     out_image = np.clip(out_image, 0, 255).astype(np.uint8)
     return out_image
 
@@ -78,20 +86,22 @@ def color_mask(mask, colors):
     return colored_image
 
 
-def draw_box(image, box, label=None, color=(255, 0, 0), line_thickness=2, font_thickness=2, font_scale=1):
+def draw_box(image, box, label=None, color=(255, 0, 0),
+             line_thickness=2, font_thickness=2, font_scale=1):
     x1, y1, x2, y2 = box
-    
+
     image = cv2.rectangle(image, (x1, y1), (x2, y2), color, line_thickness)
-    image = cv2.putText(image, label, (x1 + 10, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX ,  
-                                   font_scale, color, font_thickness, cv2.LINE_AA) 
-    
+    image = cv2.putText(image, label, (x1 + 10, y1 + 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
+                        font_thickness, cv2.LINE_AA)
+
     return image
 
 
 def get_boxes_intersection(box1, box2):
     dx = min(box1[2], box2[2]) - max(box1[0], box2[0])
     dy = min(box1[3], box2[3]) - max(box1[1], box2[1])
-    if (dx>=0) and (dy>=0):
+    if (dx >= 0) and (dy >= 0):
         return dx*dy
     else:
         return 0
@@ -108,20 +118,21 @@ def change_contrast(input_img, contrast=0):
 
 def clear_noise(image):
     img = image.copy()
-    
+
     c_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     dilate = cv2.morphologyEx(img, cv2.MORPH_DILATE, c_kernel)
-    
+
     e_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     erose = cv2.morphologyEx(dilate, cv2.MORPH_ERODE, e_kernel)
-    
+
     return erose
 
 
 def resize_if_need(image, max_h, max_w):
     img = image.copy()
     img_h, img_w, img_c = img.shape
-    coef = 1 if img_h <= max_h and img_w <= max_w else max(img_h / max_h, img_w / max_w)
+    coef = 1 if img_h <= max_h and img_w <= max_w else max(
+        img_h / max_h, img_w / max_w)
     h = int(img_h / coef)
     w = int(img_w / coef)
     img = cv2.resize(img, (w, h))
@@ -187,7 +198,7 @@ def slerp(v0, v1, t, DOT_THRESHOLD=0.9995):
 def get_info_from_yolo_mark(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
-        
+
     info = []
     for line in lines:
         x = line.split()
