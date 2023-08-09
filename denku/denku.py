@@ -230,9 +230,7 @@ def get_cosine_value(current_index, start_value, total_steps, end_value=0):
     return values[current_index]
 
 def get_ema_value(current_index, start_value, eta):
-    value = start_value
-    for i in range(current_index):
-        value *= eta
+    value = start_value * eta ** current_index
     return value
     
 
