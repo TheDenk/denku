@@ -218,13 +218,13 @@ def slerp(v0, v1, t, DOT_THRESHOLD=0.9995):
     return v2
 
 
-def get_linear_value(current_index, start_value, max_items_count):
-    values = np.linspace(start_value, 0, max_items_count, dtype=np.float32) / start_value
+def get_linear_value(current_index, start_value, total_steps, end_value=0):
+    values = np.linspace(start_value, end_value, total_steps, dtype=np.float32) / start_value
     values = values * start_value
     return values[current_index]
 
-def get_cosine_value(current_index, start_value, max_items_count):
-    values = np.arange(max_items_count, dtype=np.float32) * np.pi / max_items_count
+def get_cosine_value(current_index, start_value, total_steps, end_value=0):
+    values = np.linspace(end_value, total_steps, total_steps, dtype=np.float32) * np.pi / total_steps
     values = np.cos(values)
     values = (values + 1) * start_value / 2
     return values[current_index]
