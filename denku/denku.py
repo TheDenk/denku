@@ -218,6 +218,24 @@ def slerp(v0, v1, t, DOT_THRESHOLD=0.9995):
     return v2
 
 
+def get_linear_value(current_index, start_value, max_items_count):
+    values = np.linspace(start_value, 0, max_items_count, dtype=np.float32) / start_value
+    values = values * start_value
+    return values[current_index]
+
+def get_cosine_value(current_index, start_value, max_items_count):
+    values = np.arange(max_items_count, dtype=np.float32) * np.pi / max_items_count
+    values = np.cos(values)
+    values = (values + 1) * start_value / 2
+    return values[current_index]
+
+def get_ema_value(current_index, start_value, eta):
+    value = start_value
+    for i in range(current_index):
+        value *= eta
+    return value
+    
+
 def get_info_from_yolo_mark(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
