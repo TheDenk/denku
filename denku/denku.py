@@ -54,6 +54,14 @@ def show_images(images, n_rows=1, titles=None, figsize=(5, 5),
         plt.show()
 
 
+def get_video_info(cap):
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    return height, width, fps, frame_count
+
+
 def get_img_names(folder, img_format='png'):
     img_paths = glob.glob(os.path.join(folder, f'*.{img_format}'))
     img_names = [os.path.basename(x) for x in img_paths]
