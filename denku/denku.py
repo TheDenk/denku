@@ -193,6 +193,18 @@ def shift_all_colors(input_image):
     return out_frame
 
 
+def show_video_in_jupyter(video_path, width=480):
+    from IPython.display import HTML
+    from base64 import b64encode
+
+    data_url = "data:video/mp4;base64," + b64encode(open(video_path, 'rb').read()).decode()
+    return HTML(f'''
+        <video width={width} controls>
+            <source src="{data_url}" type="video/mp4">
+        </video>
+    ''')
+
+
 def split_on_chunks(data, n_chunks):
     chunk_size = int(len(data) / n_chunks)
     chunks = [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
