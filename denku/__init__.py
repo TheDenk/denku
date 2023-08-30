@@ -8,7 +8,7 @@ from .denku import (
     get_linear_value, get_cosine_value, get_ema_value, show_video_in_jupyter
 )
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 __all__ = [
     'download_image', 'show_image', 'show_images',
