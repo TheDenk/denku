@@ -54,6 +54,23 @@ def show_images(images, n_rows=1, titles=None, figsize=(5, 5),
         plt.show()
 
 
+def show_video_in_jupyter(video_path, width=480):
+    from IPython.display import HTML
+    from base64 import b64encode
+
+    data_url = "data:video/mp4;base64," + b64encode(open(video_path, 'rb').read()).decode()
+    return HTML(f'''
+        <video width={width} controls>
+            <source src="{data_url}" type="video/mp4">
+        </video>
+    ''')
+
+
+def show_gif_in_jupyter(gif_path, width=480):
+    from IPython.display import HTML
+    return HTML(f'<img src="{gif_path}" width="{width}">')
+
+
 def get_video_info(cap):
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -191,19 +208,7 @@ def shift_all_colors(input_image):
     hsv_frame[:, :, 0] += shift_coef
     out_frame = cv2.cvtColor(hsv_frame, cv2.COLOR_HSV2RGB)
     return out_frame
-
-
-def show_video_in_jupyter(video_path, width=480):
-    from IPython.display import HTML
-    from base64 import b64encode
-
-    data_url = "data:video/mp4;base64," + b64encode(open(video_path, 'rb').read()).decode()
-    return HTML(f'''
-        <video width={width} controls>
-            <source src="{data_url}" type="video/mp4">
-        </video>
-    ''')
-
+    
 
 def split_on_chunks(data, n_chunks):
     chunk_size = int(len(data) / n_chunks)
