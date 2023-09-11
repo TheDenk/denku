@@ -1,4 +1,4 @@
-v0.0.4-rc
+v0.0.4-rc (not yet exists in pypi)
 -------
 - show_gif_in_jupyter
 
