@@ -275,3 +275,20 @@ def get_info_from_yolo_mark(file_path):
             'y2': float(y) + float(h) / 2,
         })
     return info
+
+def get_module_parameters_count_m(module, name):
+    params = [p.numel() for n, p in module.named_parameters()]
+    return sum(params) / 1e6
+    
+def get_current_cuda_allocated_memory_gb():
+    import torch
+    return torch.cuda.memory_allocated() / 1e9
+    
+def get_module_memory_gb(module, name, dtype='fp32'):
+    params = [p.numel() for n, p in module.named_parameters()]
+    if dtype == 'fp16':
+        return sum(params) * 2 / 1e9
+    elif dtype == 'fp32':
+        return sum(params) * 4 / 1e9
+    else:
+        raise NotImplementedError
