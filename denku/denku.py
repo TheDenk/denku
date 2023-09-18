@@ -71,7 +71,7 @@ def show_gif_in_jupyter(gif_path, width=480):
     return HTML(f'<img src="{gif_path}" width="{width}">')
 
 
-def get_video_info(cap):
+def get_capture_info(cap):
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
