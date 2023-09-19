@@ -5,7 +5,8 @@ from .denku import (
     get_mask_for_box, color_mask, draw_box, get_boxes_intersection,
     change_contrast, clear_noise, resize_proportional, make_image_padding,
     shift_all_colors, split_on_chunks, do_multiprocess, load_json, slerp,
-    get_linear_value, get_cosine_value, get_ema_value, show_video_in_jupyter
+    get_linear_value, get_cosine_value, get_ema_value, 
+    show_video_in_jupyter, save_image,
 )
 
 __version__ = '0.0.3'
@@ -17,5 +18,5 @@ __all__ = [
     'change_contrast', 'clear_noise', 'resize_proportional', 'make_image_padding',
     'shift_all_colors', 'split_on_chunks', 'do_multiprocess', 'load_json',
     'slerp', 'get_linear_value', 'get_cosine_value', 'get_ema_value', 
-    'show_video_in_jupyter',
+    'show_video_in_jupyter', 'save_image',
 ]
