@@ -100,6 +100,13 @@ def read_image(img_path: str, to_rgb: bool = True,
     return image
 
 
+def save_image(img, file_path, mkdir=True):
+    if mkdir:
+        dir_name = os.path.abspath(os.path.dirname(file_path))
+        os.makedirs(dir_name, exist_ok=True)
+    return cv2.imwrite(file_path, img)
+
+
 def apply_mask_with_gauss(bg_img, src_img, mask,
                           kernel=(7, 7), sigma=0.0, alpha=0.5):
     mask = mask.astype(np.float32)
