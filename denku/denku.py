@@ -218,7 +218,7 @@ def shift_all_colors(input_image):
     
 
 def split_on_chunks(data, n_chunks):
-    chunk_size = int(len(data) / n_chunks)
+    chunk_size = len(data) // n_chunks + 1
     chunks = [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
     return chunks
 
