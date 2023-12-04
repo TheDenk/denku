@@ -255,12 +255,32 @@ def get_linear_value(current_index, start_value, total_steps, end_value=0):
     values = values * start_value
     return values[current_index]
 
+
 def get_cosine_value(current_index, start_value, total_steps, end_value=0):
     values = np.linspace(end_value, total_steps, total_steps, dtype=np.float32) * np.pi / total_steps
     values = np.cos(values)
     values = (values + 1) * start_value / 2
     return values[current_index]
 
+
+def mask2rle(img):
+    pixels= img.T.flatten()
+    pixels = np.concatenate([[0], pixels, [0]])
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+    runs[1::2] -= runs[::2]
+    return ' '.join(str(x) for x in runs)
+
+
+def rle2mask(mask_rle, shape):
+    s = mask_rle.split()
+    starts, lengths = [np.asarray(x, dtype=int) for x in (s[0:][::2], s[1:][::2])]
+    starts -= 1
+    ends = starts + lengths
+    img = np.zeros(shape[0] * shape[1], dtype=np.uint8)
+    for lo, hi in zip(starts, ends):
+        img[lo : hi] = 1
+    return img.reshape(shape).T
+    
 def get_ema_value(current_index, start_value, eta):
     value = start_value * eta ** current_index
     return value
@@ -283,14 +303,17 @@ def get_info_from_yolo_mark(file_path):
         })
     return info
 
+
 def get_module_parameters_count_m(module):
     params = [p.numel() for n, p in module.named_parameters()]
     return sum(params) / 1e6
-    
+
+
 def get_current_cuda_allocated_memory_gb():
     import torch
     return torch.cuda.memory_allocated() / 1e9
-    
+
+
 def get_module_memory_gb(module, dtype='fp32'):
     params = [p.numel() for n, p in module.named_parameters()]
     if dtype == 'fp16':
