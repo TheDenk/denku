@@ -7,7 +7,7 @@ from .denku import (
     make_image_padding, shift_all_colors, split_on_chunks,
     do_multiprocess, load_json, slerp, get_linear_value,
     get_cosine_value, get_ema_value, show_video_in_jupyter,
-    save_image,
+    show_gif_in_jupyter, save_image,
 )
 
 __version__ = '0.0.4'
@@ -20,5 +20,5 @@ __all__ = [
     'make_image_padding', 'shift_all_colors', 'split_on_chunks',
     'do_multiprocess', 'load_json', 'slerp', 'get_linear_value',
     'get_cosine_value', 'get_ema_value', 'show_video_in_jupyter',
-    'save_image',
+    'show_gif_in_jupyter', 'save_image',
 ]
