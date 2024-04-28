@@ -183,6 +183,39 @@ def clear_noise(image):
     return dilate
 
 
+def resize_proportional_to_min_side(image, min_side):
+    img = np.array(image).copy()
+    h, w = img.shape[:2]
+    cur_side = min(h, w)
+    coef = min_side / cur_side
+    new_h, new_w = [int(x * coef) for x in [h, w]]
+    img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
+    return Image.fromarray(img)
+
+
+def center_crop(image, crop_h, crop_w):
+    img = np.array(image).copy()
+    h, w = img.shape[:2]
+    center_h = h // 2
+    center_w = w // 2
+    half_crop_h = crop_h // 2
+    half_crop_w = crop_w // 2
+
+    y_min = center_h - half_crop_h
+    y_max = center_h + half_crop_h + crop_h % 2
+    x_min = center_w - half_crop_w
+    x_max = center_w + half_crop_w + crop_w % 2
+    img = img[y_min:y_max, x_min:x_max]
+    return PIL.Image.fromarray(img)
+
+
+def resize_proportional_center_crop(image, img_h, img_w):
+    min_side = max(img_h, img_w)
+    img = resize_proportional_to_min_side(image, min_side=min_side)
+    img = center_crop(img, crop_h=img_h, crop_w=img_w)
+    return img
+    
+
 def resize_proportional(image, max_h, max_w):
     img = image.copy()
     img_h, img_w, img_c = img.shape
