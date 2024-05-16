@@ -2,6 +2,7 @@
 import os
 import glob
 import json
+import datetime
 import requests
 import multiprocessing as mp
 
@@ -9,6 +10,12 @@ import cv2
 import PIL
 import numpy as np
 from matplotlib import pyplot as plt
+
+
+def get_datetime():
+    UTC = datetime.timezone(datetime.timedelta(hours=+3))
+    date = datetime.datetime.now(UTC).strftime('%Y-%m-%d_%H-%M-%S')
+    return date
 
 
 def download_image(url):
