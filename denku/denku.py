@@ -190,14 +190,46 @@ def clear_noise(image):
     return dilate
 
 
-def resize_proportional_to_min_side(image, min_side):
-    img = np.array(image).copy()
-    h, w = img.shape[:2]
+def apply_divide_factor(x, divide_factor=8, upward=True):
+    if upward:
+        return (x // divide_factor + int(x % divide_factor != 0)) * divide_factor 
+    return x // divide_factor * divide_factor 
+
+
+def resize_to_min_sides(input_image, min_h, min_w):
+    image = np.array(input_image)
+    img_h, img_w = image.shape[:2]
+    
+    if img_h >= min_h and img_w >= min_w:
+        coef = min(min_h / img_h, min_w / img_w)
+    elif img_h <= min_h and img_w <=min_w:
+        coef = max(min_h / img_h, min_w / img_w)
+    else:
+        coef = min_h / img_h if min_h > img_h else min_w / img_w 
+
+    out_h, out_w = int(img_h * coef), int(img_w * coef)
+    image = cv2.resize(image, (out_w, out_h))
+    return Image.fromarray(image)
+    
+
+def resize_to_min_side(input_image, min_side, interpolation=cv2.INTER_CUBIC):
+    image = np.array(input_image).copy()
+    h, w = image.shape[:2]
     cur_side = min(h, w)
     coef = min_side / cur_side
     new_h, new_w = [int(x * coef) for x in [h, w]]
-    img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
-    return Image.fromarray(img)
+    image = cv2.resize(image, (new_w, new_h), interpolation=interpolation)
+    return Image.fromarray(image)
+
+
+def resize_to_max_side(input_image, max_side, interpolation=cv2.INTER_CUBIC):
+    image = np.array(input_image).copy()
+    h, w = image.shape[:2]
+    cur_side = max(h, w)
+    coef = max_side / cur_side
+    new_h, new_w = [int(x * coef) for x in [h, w]]
+    image = cv2.resize(image, (new_w, new_h), interpolation=interpolation)
+    return Image.fromarray(image)
 
 
 def center_crop(image, crop_h, crop_w):
@@ -216,14 +248,7 @@ def center_crop(image, crop_h, crop_w):
     return PIL.Image.fromarray(img)
 
 
-def resize_proportional_center_crop(image, img_h, img_w):
-    min_side = max(img_h, img_w)
-    img = resize_proportional_to_min_side(image, min_side=min_side)
-    img = center_crop(img, crop_h=img_h, crop_w=img_w)
-    return img
-    
-
-def resize_proportional(image, max_h, max_w):
+def resize_if_larger(image, max_h, max_w):
     img = image.copy()
     img_h, img_w, img_c = img.shape
     coef = 1 if img_h <= max_h and img_w <= max_w else max(
