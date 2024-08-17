@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import gc
 import glob
 import json
 import datetime
@@ -399,3 +400,19 @@ def print_trainable_parameters(model):
     print(
         f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
     )
+
+
+def reset_memory():
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.reset_accumulated_memory_stats()
+    torch.cuda.reset_peak_memory_stats()
+
+
+def print_memory():
+    memory = round(torch.cuda.memory_allocated() / 1024**3, 2)
+    max_memory = round(torch.cuda.max_memory_allocated() / 1024**3, 2)
+    max_reserved = round(torch.cuda.max_memory_reserved() / 1024**3, 2)
+    print(f"{memory=} GB")
+    print(f"{max_memory=} GB")
+    print(f"{max_reserved=} GB")
