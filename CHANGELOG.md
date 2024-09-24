@@ -1,6 +1,7 @@
 v0.0.5 (Not realised in pip yet)
 - fixed split_on_chunks method
 - mask2rle, rle2mask
+- add_mask_on_image
 
 
 v0.0.4
