@@ -115,7 +115,7 @@ def save_image(img, file_path, mkdir=True):
     return cv2.imwrite(file_path, img)
 
 
-def apply_mask_with_gauss(bg_img, src_img, mask,
+def merge_images_by_mask_with_gauss(bg_img, src_img, mask,
                           kernel=(7, 7), sigma=0.0, alpha=0.5):
     mask = mask.astype(np.float32)
     b_mask = cv2.GaussianBlur(mask, kernel, sigma)
@@ -160,6 +160,19 @@ def draw_box(image, box, label=None, color=(255, 0, 0),
 
     return image
 
+
+def add_mask_on_image(image, mask, color, alpha):
+    colored_mask = mask.copy()
+    if colored_mask.ndim == 2:
+        colored_mask = np.expand_dims(mask, 0).repeat(3, axis=0)
+        colored_mask = np.moveaxis(colored_mask, 0, -1)
+    elif colored_mask.shape[-1] == 1:
+        colored_mask = np.concatenate([colored_mask] * 3, axis=2)
+    masked = np.ma.MaskedArray(image, mask=colored_mask, fill_value=color)
+    image_overlay = masked.filled()
+    image_combined = cv2.addWeighted(image, 1 - alpha, image_overlay, alpha, 0)
+    return image_combined
+    
 
 def get_boxes_intersection(box1, box2):
     dx = min(box1[2], box2[2]) - max(box1[0], box2[0])
