@@ -149,28 +149,36 @@ def color_mask(mask, colors):
     return colored_image
 
 
-def draw_box(image, box, label=None, color=(255, 0, 0),
-             line_thickness=2, font_thickness=2, font_scale=1):
+def draw_box(input_image, box, label=None, color=(255, 0, 0),
+             line_thickness=3, font_thickness=None, font_scale=None):
     x1, y1, x2, y2 = box
+    image = input_image.copy()
 
+    line_thickness = line_thickness or round(0.002 * (image.shape[0] + image.shape[1]) / 2) + 1
+    color = color or [np.random.randint(0, 255) for _ in range(3)]
     image = cv2.rectangle(image, (x1, y1), (x2, y2), color, line_thickness)
-    image = cv2.putText(image, label, (x1 + 10, y1 + 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
-                        font_thickness, cv2.LINE_AA)
 
+    if label:
+        font_thickness = max(line_thickness - 1, 1) 
+        t_size = cv2.getTextSize(label, 0, fontScale=line_thickness / 3, thickness=font_thickness)[0]
+        t_x2, t_y2 = x1 + t_size[0], y1 - t_size[1] - 3
+        image = cv2.rectangle(image, (x1, y1), (t_x2, t_y2), color, -1, cv2.LINE_AA)  # filled
+        image = cv2.putText(image, label, (x1, y1 - 2), 0, line_thickness / 3, [225, 255, 255], thickness=font_thickness, lineType=cv2.LINE_AA)
     return image
 
 
-def add_mask_on_image(image, mask, color, alpha):
-    colored_mask = mask.copy()
-    if colored_mask.ndim == 2:
-        colored_mask = np.expand_dims(mask, 0).repeat(3, axis=0)
-        colored_mask = np.moveaxis(colored_mask, 0, -1)
-    elif colored_mask.shape[-1] == 1:
-        colored_mask = np.concatenate([colored_mask] * 3, axis=2)
-    masked = np.ma.MaskedArray(image, mask=colored_mask, fill_value=color)
-    image_overlay = masked.filled()
-    image_combined = cv2.addWeighted(image, 1 - alpha, image_overlay, alpha, 0)
+def add_mask_on_image(image, mask, color, alpha=0.9):
+    color = np.array(color)
+    original_mask = mask.copy()
+    if original_mask.ndim == 2:
+        original_mask = np.expand_dims(mask, 0).repeat(3, axis=0)
+        original_mask = np.moveaxis(original_mask, 0, -1)
+    elif original_mask.shape[-1] == 1:
+        original_mask = np.concatenate([original_mask] * 3, axis=2)
+        
+    colored_mask = original_mask.astype(np.float32) / 255 * color
+    colored_mask = np.clip(colored_mask, 0, 255).astype(np.uint8)
+    image_combined = cv2.addWeighted(image, 1, colored_mask, alpha, 0)
     return image_combined
     
 
