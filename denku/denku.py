@@ -411,6 +411,18 @@ def get_module_memory_gb(module, dtype='fp32'):
         raise NotImplementedError
 
 
+def log_trainable_params(logger, model, model_name):
+    total_params = list(model.parameters())
+    trainable_params = list(filter(lambda p: p.requires_grad, model.parameters()))
+    
+    total_scale = sum(p.numel() for p in total_params) / 1e6
+    trainable_scale = sum(p.numel() for p in trainable_params) / 1e6
+    
+    logger.info(f"[ {model_name} count trainable: {len(trainable_params)} | total: {len(total_params)} ]")
+    logger.info(f"[ {model_name} scale trainable: {trainable_scale:.3f} M | total: {total_scale:.3f} M ]")
+    logger.info("")
+    
+
 def print_trainable_parameters(model):
     trainable_params = 0
     all_param = 0
