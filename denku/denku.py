@@ -149,6 +149,22 @@ def color_mask(mask, colors):
     return colored_image
 
 
+def draw_image_title(pil_image, text, color=None, font_thickness=2):
+    out_image = np.array(pil_image)
+    img_h, img_w = out_image.shape[:2]
+    
+    font_scale = max(font_thickness // 2, 1)
+    color = color or [np.random.randint(0, 255) for _ in range(3)]
+    text_w, text_h = cv2.getTextSize(text, 0, fontScale=font_scale, thickness=font_thickness)[0]
+    
+    pad = text_h + text_h // 2
+    text_x, text_y = (img_w - text_w) // 2, text_h + text_h // 4
+    
+    out_image[:pad, :] = np.clip((out_image[:pad, :].astype(np.uint16) + 64), 0, 255).astype(np.uint8)
+    out_image = cv2.putText(out_image, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, font_thickness, cv2.LINE_AA)
+    return Image.fromarray(out_image)
+
+
 def draw_box(input_image, box, label=None, color=(255, 0, 0),
              line_thickness=3, font_thickness=None, font_scale=None):
     x1, y1, x2, y2 = box
