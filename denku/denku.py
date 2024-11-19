@@ -162,7 +162,7 @@ def draw_image_title(pil_image, text, color=None, font_thickness=2):
     
     out_image[:pad, :] = np.clip((out_image[:pad, :].astype(np.uint16) + 64), 0, 255).astype(np.uint8)
     out_image = cv2.putText(out_image, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, font_thickness, cv2.LINE_AA)
-    return Image.fromarray(out_image)
+    return PIL.Image.fromarray(out_image)
 
 
 def draw_box(input_image, box, label=None, color=(255, 0, 0),
@@ -247,7 +247,7 @@ def resize_to_min_sides(input_image, min_h, min_w):
 
     out_h, out_w = int(img_h * coef), int(img_w * coef)
     image = cv2.resize(image, (out_w, out_h))
-    return Image.fromarray(image)
+    return PIL.Image.fromarray(image)
     
 
 def resize_to_min_side(input_image, min_side, interpolation=cv2.INTER_CUBIC):
@@ -257,7 +257,7 @@ def resize_to_min_side(input_image, min_side, interpolation=cv2.INTER_CUBIC):
     coef = min_side / cur_side
     new_h, new_w = [int(x * coef) for x in [h, w]]
     image = cv2.resize(image, (new_w, new_h), interpolation=interpolation)
-    return Image.fromarray(image)
+    return PIL.Image.fromarray(image)
 
 
 def resize_to_max_side(input_image, max_side, interpolation=cv2.INTER_CUBIC):
@@ -267,7 +267,7 @@ def resize_to_max_side(input_image, max_side, interpolation=cv2.INTER_CUBIC):
     coef = max_side / cur_side
     new_h, new_w = [int(x * coef) for x in [h, w]]
     image = cv2.resize(image, (new_w, new_h), interpolation=interpolation)
-    return Image.fromarray(image)
+    return PIL.Image.fromarray(image)
 
 
 def center_crop(image, crop_h, crop_w):
