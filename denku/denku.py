@@ -390,6 +390,28 @@ def get_ema_value(current_index, start_value, eta):
     return value
     
 
+def convert_fps(frame_indexes: list, base_fps: int, out_fps: int) -> list:
+    if base_fps == out_fps:
+        return frame_indexes  
+    
+    input_frame_time = 1.0 / base_fps
+    output_frame_time = 1.0 / out_fps
+    
+    out_frame_indexes = []
+    current_output_time = 0.0 
+    input_idx = 0 
+    
+    while input_idx < len(frame_indexes):
+        input_time = input_idx * input_frame_time
+        
+        if abs(input_time - current_output_time) <= input_frame_time / 2:
+            out_frame_indexes.append(frame_indexes[input_idx])
+            current_output_time += output_frame_time 
+        input_idx += 1
+        
+    return out_frame_indexes
+
+
 def get_info_from_yolo_mark(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
