@@ -271,6 +271,20 @@ def resize_to_max_side(input_image, max_side, interpolation=cv2.INTER_CUBIC):
     return PIL.Image.fromarray(image)
 
 
+def resize_image_and_boxes(input_image, input_boxes, target_height, target_width):
+    original_height, original_width = input_image.shape[:2]
+    scale_x = target_width / original_width
+    scale_y = target_height / original_height
+
+    resized_image = cv2.resize(input_image, (target_width, target_height))
+    resized_boxes = []
+    for box in input_boxes:
+        x1, x2 = [int(num * scale_x) for num in box[::2]]
+        y1, y2 = [int(num * scale_y) for num in box[1::2]]
+        resized_boxes.append([x1, y1, x2, y2])
+    return resized_image, resized_boxes
+
+
 def center_crop(image, crop_h, crop_w):
     img = np.array(image).copy()
     h, w = img.shape[:2]
