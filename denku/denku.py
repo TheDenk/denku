@@ -426,6 +426,30 @@ def convert_fps(frame_indexes: list, base_fps: int, out_fps: int) -> list:
     return out_frame_indexes
 
 
+def read_video(video_path, start_frame=0, frames_count=None, max_side=None):
+    capture = cv2.VideoCapture(video_path)
+    capture.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+    height, width, fps, original_frames_count = get_capture_info(capture)
+    frames_count = frames_count or original_frames_count
+    out_frames = []
+    for _ in range(frames_count):
+        ret, frame = capture.read()
+        if not ret:
+            continue
+        if max_side:
+            frame = resize_to_max_side(frame, max_side=max_side)
+        out_frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    height, width = frame.shape[:2]
+    capture.release()
+    return {
+        "video": np.stack(out_frames),
+        "height": height,
+        "width": width,
+        "fps": fps,
+        "frames_count": frames_count,
+    }
+    
+
 def get_info_from_yolo_mark(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
