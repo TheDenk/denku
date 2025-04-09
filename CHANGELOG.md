@@ -1,3 +1,15 @@
+v0.1.0
+-------
+- Major refactoring of the codebase into modular structure
+- Split monolithic file into specialized modules:
+  - utils: General utility functions
+  - image: Image processing functions
+  - visualization: Visualization and display functions
+  - video: Video processing functions
+  - memory: Memory management and PyTorch-related functions
+- Added proper type hints and docstrings to all functions
+- Renamed print_memory to print_cuda_allocated_memory for clarity
+
 v0.0.5
 -------
 - fixed split_on_chunks method
