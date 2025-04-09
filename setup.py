@@ -18,8 +18,12 @@ def read_file(filename):
     Returns:
         str: Contents of the file.
     """
-    with open(os.path.join(os.path.dirname(__file__), filename), encoding='utf-8') as f:
-        return f.read()
+    try:
+        with open(os.path.join(os.path.dirname(__file__), filename), encoding='utf-8') as f:
+            return f.read()
+    except (IOError, FileNotFoundError):
+        print(f"Warning: Could not read file {filename}")
+        return ""
 
 
 def get_version():
@@ -28,11 +32,11 @@ def get_version():
     Returns:
         str: The package version.
     """
-    init_file = read_file('denku/__init__.py')
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", init_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string in denku/__init__.py")
+    init = read_file('denku/__init__.py')
+    for line in init.split('\n'):
+        if line.startswith('__version__'):
+            return eval(line.split('=')[1])
+    return "0.1.0"
 
 
 def get_requirements():
@@ -41,8 +45,24 @@ def get_requirements():
     Returns:
         list: List of requirements.
     """
-    requirements_file = read_file('requirements.txt')
-    return [line.strip() for line in requirements_file.splitlines() if line.strip() and not line.startswith('#')]
+    try:
+        requirements_file = read_file('requirements.txt')
+        if requirements_file:
+            return [line.strip() for line in requirements_file.splitlines() 
+                    if line.strip() and not line.startswith('#')]
+    except Exception as e:
+        print(f"Warning: Error reading requirements.txt: {e}")
+    
+    # Fallback to default requirements
+    return [
+        'numpy>=1.11.1',
+        'Pillow>=9.5.0',
+        'matplotlib>=3.6.0',
+        'opencv-python>=4.7.0.72',
+        'opencv-python-headless>=4.6.0.66',
+        'opencv-contrib-python>=4.6.0.66',
+        'torch>=1.7.0',
+    ]
 
 
 # Package metadata
@@ -62,8 +82,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
-    'Topic :: Scientific/Engineering :: Image Processing',
-    'Topic :: Scientific/Engineering :: Computer Vision',
+    'Topic :: Scientific/Engineering :: Image Processing'
 ]
 
 # Setup configuration
@@ -80,14 +99,7 @@ setup(
     classifiers=CLASSIFIERS,
     keywords='computer-vision, image-processing, video-processing, visualization, opencv, numpy, pytorch',
     packages=find_packages(),
-    install_requires=[
-        'numpy>=1.11.1',
-        'Pillow>=9.5.0',
-        'matplotlib>=3.6.0',
-        'opencv-python>=4.7.0.72',
-        'opencv-python-headless>=4.6.0.66',
-        'opencv-contrib-python>=4.6.0.66',
-    ],
+    install_requires=get_requirements(),
     python_requires='>=3.7',
     project_urls={
         'Bug Reports': f'{URL}/issues',
