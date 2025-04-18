@@ -2,7 +2,7 @@
 
 import gc
 import torch
-from typing import Union
+from typing import Any, Union
 
 
 def get_module_parameters_count_m(module: torch.nn.Module) -> float:
