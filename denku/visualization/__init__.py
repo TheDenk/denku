@@ -162,12 +162,13 @@ def draw_box(input_image: np.ndarray, box: Tuple[int, int, int, int],
     image = cv2.rectangle(image, (x1, y1), (x2, y2), color, line_thickness)
 
     if label:
-        font_thickness = max(line_thickness - 1, 1) 
+        font_scale = font_scale or line_thickness / 3
+        font_thickness = font_thickness or max(line_thickness - 1, 1) 
         t_size = cv2.getTextSize(label, 0, fontScale=line_thickness / 3, thickness=font_thickness)[0]
         y1 = t_size[1] + 3 if y1 < (t_size[1] + 3) else y1
         t_x2, t_y2 = x1 + t_size[0], y1 - t_size[1] - 3
         image = cv2.rectangle(image, (x1, y1), (t_x2, t_y2), color, -1, cv2.LINE_AA)  # filled
-        image = cv2.putText(image, label, (x1, y1 - 2), 0, line_thickness / 3, [225, 255, 255], thickness=font_thickness, lineType=cv2.LINE_AA)
+        image = cv2.putText(image, label, (x1, y1 - 2), 0, font_scale, [225, 255, 255], thickness=font_thickness, lineType=cv2.LINE_AA)
     return image
 
 
