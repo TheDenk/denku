@@ -106,21 +106,21 @@ def show_gif_in_jupyter(gif_path: str, width: int = 480) -> HTML:
     return HTML(f'<img src="{gif_path}" width="{width}">')
 
 
-def draw_image_title(pil_image: PIL.Image.Image, text: str,
+def draw_image_title(input_image: np.ndarray, text: str,
                     color: Optional[List[int]] = None,
-                    font_thickness: int = 2) -> PIL.Image.Image:
-    """Add title to PIL image.
+                    font_thickness: int = 2) -> np.ndarray:
+    """Add title to numpy image.
     
     Args:
-        pil_image (PIL.Image.Image): Input image
+        input_image np.ndarray: Input image
         text (str): Title text
         color (Optional[List[int]], optional): Text color. Defaults to None.
         font_thickness (int, optional): Font thickness. Defaults to 2.
         
     Returns:
-        PIL.Image.Image: Image with title
+        np.ndarray: Image with title
     """
-    out_image = np.array(pil_image)
+    out_image = input_image.copy()
     img_h, img_w = out_image.shape[:2]
     
     font_scale = max(font_thickness // 2, 1)
@@ -132,7 +132,7 @@ def draw_image_title(pil_image: PIL.Image.Image, text: str,
     
     out_image[:pad, :] = np.clip((out_image[:pad, :].astype(np.uint16) + 64), 0, 255).astype(np.uint8)
     out_image = cv2.putText(out_image, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, font_thickness, cv2.LINE_AA)
-    return PIL.Image.fromarray(out_image)
+    return out_image
 
 
 def draw_box(input_image: np.ndarray, box: Tuple[int, int, int, int],
