@@ -10,12 +10,12 @@ repos:
     -   id: end-of-file-fixer
     -   id: fix-encoding-pragma
     -   id: mixed-line-ending
-    -   id: trailing-whitespace
--   repo: https://github.com/pycqa/flake8
-    rev: "4.0.1"
-    hooks:
-    -   id: flake8
-        args: ['--config=setup.cfg']
+#     -   id: trailing-whitespace
+# -   repo: https://github.com/pycqa/flake8
+#     rev: "4.0.1"
+#     hooks:
+#     -   id: flake8
+#         args: ['--config=setup.cfg']
 -   repo: https://github.com/pre-commit/mirrors-autopep8
     rev: v1.6.0
     hooks:

@@ -3,11 +3,12 @@
 Custom computer vision utilities for image and video processing, visualization, and memory management.
 
 
-## Getting Started
-```
+## Installation
+
+### For Users
+```bash
 pip install denku
 ```
-
 
 ## Features
 
@@ -32,6 +33,15 @@ mask = get_color_mask_with_hsv(image, color_min, color_max)
 # Merge images using a mask
 background = read_image("path/to/background.jpg")
 merged = merge_images_by_mask_with_gauss(background, image, mask)
+
+# Resize images
+from denku.image import resize_to_min_side, resize_to_max_side
+
+# Resize image to have minimum side of 256 pixels
+resized_min = resize_to_min_side(image, min_side=256)
+
+# Resize image to have maximum side of 512 pixels
+resized_max = resize_to_max_side(image, max_side=512)
 ```
 
 ### Video Processing
@@ -46,6 +56,24 @@ original_fps = 30
 target_fps = 15
 frame_indexes = list(range(0, 300, 10))
 converted_indexes = convert_fps(frame_indexes, original_fps, target_fps)
+
+# Create video grid
+from denku.video import create_video_grid
+
+# Create a 2x2 grid of videos
+input_videos = [
+    "path/to/video1.mp4",
+    "path/to/video2.mp4",
+    "path/to/video3.mp4",
+    "path/to/video4.mp4"
+]
+create_video_grid(
+    input_videos=input_videos,
+    output_path="path/to/grid_output.mp4",
+    grid_size=(2, 2),
+    target_duration=5.0,
+    fps=30
+)
 ```
 
 ### Visualization in Jupyter Notebooks
@@ -74,6 +102,40 @@ empty_cuda_cache()
 
 # Print current CUDA memory usage
 print_cuda_allocated_memory()
+```
+
+
+## Development
+
+### Setup Development Environment
+```bash
+# Clone the repository
+git clone https://github.com/TheDenk/denku.git
+cd denku
+
+# Install with development dependencies
+pip install -e ".[dev]"
+
+# Install pre-commit hooks
+pre-commit install
+```
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=denku
+
+# Run tests for a specific module
+pytest tests/test_utils.py
+
+# Run tests with detailed output
+pytest -v
+
+# Run tests and show coverage in HTML format
+pytest --cov=denku --cov-report=html
 ```
 
 

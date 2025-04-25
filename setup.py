@@ -5,16 +5,15 @@ Setup script for the denku package.
 """
 
 import os
-import re
 from setuptools import setup, find_packages
 
 
 def read_file(filename):
     """Read the contents of a file.
-    
+
     Args:
         filename (str): Path to the file relative to the setup.py directory.
-        
+
     Returns:
         str: Contents of the file.
     """
@@ -22,13 +21,13 @@ def read_file(filename):
         with open(os.path.join(os.path.dirname(__file__), filename), encoding='utf-8') as f:
             return f.read()
     except (IOError, FileNotFoundError):
-        print(f"Warning: Could not read file {filename}")
-        return ""
+        print(f'Warning: Could not read file {filename}')
+        return ''
 
 
 def get_version():
     """Extract the version from the package's __init__.py file.
-    
+
     Returns:
         str: The package version.
     """
@@ -36,33 +35,46 @@ def get_version():
     for line in init.split('\n'):
         if line.startswith('__version__'):
             return eval(line.split('=')[1])
-    return "0.1.0"
+    return '0.1.0'
 
 
-def get_requirements():
-    """Get the list of requirements from requirements.txt.
-    
+def get_requirements(dev=False):
+    """Get the list of requirements from requirements.txt or requirements-dev.txt.
+
+    Args:
+        dev (bool): If True, include development requirements.
+
     Returns:
         list: List of requirements.
+
+    Raises:
+        FileNotFoundError: If requirements file is not found.
+        ValueError: If requirements file is empty or invalid.
     """
-    try:
-        requirements_file = read_file('requirements.txt')
-        if requirements_file:
-            return [line.strip() for line in requirements_file.splitlines() 
-                    if line.strip() and not line.startswith('#')]
-    except Exception as e:
-        print(f"Warning: Error reading requirements.txt: {e}")
-    
-    # Fallback to default requirements
-    return [
-        'numpy>=1.11.1',
-        'Pillow>=9.5.0',
-        'matplotlib>=3.6.0',
-        'opencv-python>=4.7.0.72',
-        'opencv-python-headless>=4.6.0.66',
-        'opencv-contrib-python>=4.6.0.66',
-        'torch>=1.7.0',
-    ]
+    requirements_file = 'requirements-dev.txt' if dev else 'requirements.txt'
+    requirements = read_file(requirements_file)
+
+    if not requirements:
+        raise FileNotFoundError(f'{requirements_file} not found or is empty')
+
+    # Parse requirements, handling -r references
+    parsed_requirements = []
+    for line in requirements.splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if line.startswith('-r'):
+            # Recursively get requirements from referenced file
+            ref_file = line[2:].strip()
+            parsed_requirements.extend(get_requirements(
+                ref_file == 'requirements-dev.txt'))
+        else:
+            parsed_requirements.append(line)
+
+    if not parsed_requirements:
+        raise ValueError(f'No valid requirements found in {requirements_file}')
+
+    return parsed_requirements
 
 
 # Package metadata
@@ -99,8 +111,11 @@ setup(
     classifiers=CLASSIFIERS,
     keywords='computer-vision, image-processing, video-processing, visualization, opencv, numpy, pytorch',
     packages=find_packages(),
-    install_requires=get_requirements(),
-    python_requires='>=3.7',
+    install_requires=get_requirements(dev=False),
+    extras_require={
+        'dev': get_requirements(dev=True),
+    },
+    python_requires='>=3.8',
     project_urls={
         'Bug Reports': f'{URL}/issues',
         'Source': URL,

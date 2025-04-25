@@ -1,3 +1,26 @@
+v0.1.2
+-------
+- Added convert_video_fps function to convert video frames between different frame rates
+- Fixed resize logic in read_video to maintain aspect ratio
+- Changed default color space in read_video to RGB
+- Improved documentation for max_side parameter in read_video
+- Enhanced dependency management with separate requirements-dev.txt for development tools
+- Improved project structure with proper setup.py configuration
+- Added comprehensive test infrastructure with pytest
+- Fixed test failures in test_utils.py:
+  - Corrected test_split_on_chunks to handle numpy arrays properly
+  - Updated test_get_linear_value and test_get_cosine_value test cases
+  - Fixed test_get_ema_value assertions
+- Exposed additional utility functions in main package:
+  - resize_to_min_side
+  - resize_to_max_side
+  - create_video_grid
+- Enhanced documentation:
+  - Added detailed usage examples for image processing
+  - Added examples for video processing functions
+  - Improved installation and development setup instructions
+  - Added testing documentation
+
 v0.1.0
 -------
 - Major refactoring of the codebase into modular structure
