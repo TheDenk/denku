@@ -14,7 +14,7 @@ pip install denku
 
 ### Image Processing
 ```python
-from denku.image import read_image, save_image, change_contrast
+from denku import read_image, save_image, change_contrast
 
 # Read and process images
 image = read_image("path/to/image.jpg")
@@ -22,7 +22,7 @@ processed_image = change_contrast(image, contrast=20)
 save_image(processed_image, "path/to/output.jpg")
 
 # Create and apply masks
-from denku.image import get_color_mask_with_hsv, merge_images_by_mask_with_gauss
+from denku import get_color_mask_with_hsv, merge_images_by_mask_with_gauss
 import numpy as np
 
 # Create a mask based on HSV color range
@@ -35,50 +35,35 @@ background = read_image("path/to/background.jpg")
 merged = merge_images_by_mask_with_gauss(background, image, mask)
 
 # Resize images
-from denku.image import resize_to_min_side, resize_to_max_side
+from denku import resize_to_min_side, resize_to_max_side
 
-# Resize image to have minimum side of 256 pixels
+# Proportionally resize image to have minimum side of 256 pixels
 resized_min = resize_to_min_side(image, min_side=256)
 
-# Resize image to have maximum side of 512 pixels
+# Proportionally resize image to have maximum side of 512 pixels
 resized_max = resize_to_max_side(image, max_side=512)
 ```
 
 ### Video Processing
 ```python
-from denku.video import read_video, convert_fps
+import denku
 
 # Read video frames
-frames = read_video("path/to/video.mp4", start_frame=0, frames_count=100)
+frames, fps = denku.read_video("video.mp4")
 
-# Convert frame indexes to different FPS
-original_fps = 30
-target_fps = 15
-frame_indexes = list(range(0, 300, 10))
-converted_indexes = convert_fps(frame_indexes, original_fps, target_fps)
+# Convert video to different FPS
+converted_frames = denku.convert_video_fps(frames, original_fps=fps, target_fps=16)
+denku.save_video(converted_frames, "output.mp4", fps=16)
 
-# Create video grid
-from denku.video import create_video_grid
-
-# Create a 2x2 grid of videos
-input_videos = [
-    "path/to/video1.mp4",
-    "path/to/video2.mp4",
-    "path/to/video3.mp4",
-    "path/to/video4.mp4"
-]
-create_video_grid(
-    input_videos=input_videos,
-    output_path="path/to/grid_output.mp4",
-    grid_size=(2, 2),
-    target_duration=5.0,
-    fps=30
-)
+# Create a grid of videos
+video_paths = ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4"]
+grid = denku.create_video_grid(video_paths, grid_size=(2, 2))
+denku.save_video(grid, "video_grid.mp4")
 ```
 
 ### Visualization in Jupyter Notebooks
 ```python
-from denku.visualization import show_image, show_images, show_video_in_jupyter, show_gif_in_jupyter
+from denku import show_image, show_images, show_video_in_jupyter, show_gif_in_jupyter
 
 # Display images
 show_image(image, title="My Image", figsize=(10, 10))
@@ -95,7 +80,7 @@ show_gif_in_jupyter("path/to/animation.gif", width=480)
 
 ### Memory Management
 ```python
-from denku.memory import empty_cuda_cache, print_cuda_allocated_memory
+from denku import empty_cuda_cache, print_cuda_allocated_memory
 
 # Reset CUDA memory and run garbage collection
 empty_cuda_cache()
