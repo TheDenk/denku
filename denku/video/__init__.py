@@ -88,6 +88,159 @@ def convert_fps(frame_indexes: List[int], base_fps: int,
     return out_indexes
 
 
+def create_video_grid(
+    input_videos: List[str],
+    output_path: str,
+    grid_size: Tuple[int, int] = (2, 2),
+    target_duration: float = 5.0,
+    fps: int = 30,
+    target_cell_width: Optional[int] = None,
+    target_cell_height: Optional[int] = None,
+    target_output_width: Optional[int] = None,
+    target_output_height: Optional[int] = None,
+    padding_color: Tuple[int, int, int] = (0, 0, 0)
+):
+    """
+    Create an NxN video grid.
+    
+    Args:
+        input_videos: List of input video paths
+        output_path: Output video file path
+        grid_size: Tuple of (rows, cols) for the grid
+        target_duration: Duration in seconds for each video
+        fps: Output video frame rate
+        target_cell_width: Width for each grid cell
+        target_cell_height: Height for each grid cell
+        target_output_width: Total output width
+        target_output_height: Total output height
+        padding_color: Background color for padding (BGR format)
+    """
+    rows, cols = grid_size
+    total_cells = rows * cols
+    
+    if len(input_videos) < total_cells:
+        last_video = input_videos[-1]
+        input_videos += [last_video] * (total_cells - len(input_videos))
+    elif len(input_videos) > total_cells:
+        input_videos = input_videos[:total_cells]
+    
+    caps = []
+    frame_counts = []
+    original_fps = []
+    cell_widths = []
+    cell_heights = []
+    
+    print("Opening video files...")
+    for video_path in tqdm(input_videos):
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video: {video_path}")
+        
+        caps.append(cap)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_counts.append(frame_count)
+        original_fps.append(cap.get(cv2.CAP_PROP_FPS))
+        cell_widths.append(int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)))
+        cell_heights.append(int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    
+    target_frame_count = int(target_duration * fps)
+    
+    if target_cell_width is None:
+        cell_width = max(cell_widths)
+    else:
+        cell_width = target_cell_width
+    
+    if target_cell_height is None:
+        cell_height = max(cell_heights)
+    else:
+        cell_height = target_cell_height
+    
+    if target_output_width is None:
+        output_width = cell_width * cols
+    else:
+        output_width = target_output_width
+        cell_width = output_width // cols
+    
+    if target_output_height is None:
+        output_height = cell_height * rows
+    else:
+        output_height = target_output_height
+        cell_height = output_height // rows
+    
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (output_width, output_height))
+    
+    print("Processing frames...")
+    last_frames = [None] * total_cells
+
+    for frame_idx in tqdm(range(target_frame_count)):
+        current_time = frame_idx / fps
+        grid_frame = np.zeros((output_height, output_width, 3), dtype=np.uint8)
+        grid_frame[:] = padding_color
+        
+        for cell_idx in range(total_cells):
+            cap = caps[cell_idx]
+            i = cell_idx // cols  # row index
+            j = cell_idx % cols   # column index
+            
+            y_start = i * cell_height
+            y_end = (i + 1) * cell_height
+            x_start = j * cell_width
+            x_end = (j + 1) * cell_width
+            
+            target_frame_pos = int(current_time * original_fps[cell_idx])
+    
+            if target_frame_pos < frame_counts[cell_idx]:                    
+                cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame_pos)
+                ret, frame = cap.read()
+                if ret:
+                    last_frames[cell_idx] = frame
+                else:
+                    frame = last_frames[cell_idx] if last_frames[cell_idx] is not None else np.zeros((cell_heights[cell_idx], cell_widths[cell_idx], 3), dtype=np.uint8)
+            else:
+                frame = last_frames[cell_idx] if last_frames[cell_idx] is not None else np.zeros((cell_heights[cell_idx], cell_widths[cell_idx], 3), dtype=np.uint8)
+            
+            if frame.size == 0:
+                frame = np.zeros((cell_heights[cell_idx], cell_widths[cell_idx], 3), dtype=np.uint8)
+ 
+            h, w = frame.shape[:2]
+            aspect_ratio = w / h
+            
+            if aspect_ratio > (cell_width / cell_height):
+                new_w = cell_width
+                new_h = int(new_w / aspect_ratio)
+            else:
+                new_h = cell_height
+                new_w = int(new_h * aspect_ratio)
+            
+            resized_frame = cv2.resize(frame, (new_w, new_h))
+            
+            
+            pad_top = (cell_height - new_h) // 2
+            pad_bottom = cell_height - new_h - pad_top
+            pad_left = (cell_width - new_w) // 2
+            pad_right = cell_width - new_w - pad_left
+            
+            cell_frame = cv2.copyMakeBorder(
+                resized_frame,
+                pad_top,
+                pad_bottom,
+                pad_left,
+                pad_right,
+                cv2.BORDER_CONSTANT,
+                value=padding_color
+            )
+            
+            grid_frame[y_start:y_end, x_start:x_end] = cell_frame
+        
+        out.write(grid_frame)
+    
+    for cap in caps:
+        cap.release()
+    out.release()
+    print(f"Video grid successfully created at: {output_path}")
+    
+
 def get_info_from_yolo_mark(file_path: str) -> Tuple[List[Tuple[int, int, int, int]], List[str]]:
     """Read YOLO mark annotation file.
     
