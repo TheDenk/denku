@@ -28,7 +28,8 @@ def read_video(video_path: str, start_frame: int = 0,
                frames_count: Optional[int] = None,
                max_side: Optional[int] = None,
                color_space: str = 'RGB',
-               show_progress: bool = False) -> Tuple[np.ndarray, int]:
+               show_progress: bool = False,
+               frame_stride: int = 1) -> Tuple[np.ndarray, int]:
     """Read video frames with enhanced error handling and progress tracking.
 
     Args:
@@ -36,8 +37,9 @@ def read_video(video_path: str, start_frame: int = 0,
         start_frame (int, optional): Starting frame index. Defaults to 0.
         frames_count (Optional[int], optional): Number of frames to read. Defaults to None.
         max_side (Optional[int], optional): Maximum side length for proportional resize. Defaults to None.
-        color_space (str, optional): Output color space ('BGR' or 'RGB'). Defaults to 'BGR'.
+        color_space (str, optional): Output color space ('BGR' or 'RGB'). Defaults to 'RGB'.
         show_progress (bool, optional): Whether to show progress bar. Defaults to False.
+        frame_stride (int, optional): Read every Nth frame. Defaults to 1.
 
     Returns:
         Tuple[np.ndarray, int]: Numpy array of video frames [frames_count, height, width, channels] and FPS
@@ -46,12 +48,16 @@ def read_video(video_path: str, start_frame: int = 0,
         FileNotFoundError: If video file doesn't exist
         ValueError: If start_frame or frames_count is invalid
         ValueError: If color_space is not 'BGR' or 'RGB'
+        ValueError: If frame_stride is less than 1
     """
     if not os.path.exists(video_path):
         raise FileNotFoundError(f'Video file not found: {video_path}')
 
     if color_space not in ['BGR', 'RGB']:
         raise ValueError("color_space must be either 'BGR' or 'RGB'")
+
+    if frame_stride < 1:
+        raise ValueError('frame_stride must be at least 1')
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -64,10 +70,10 @@ def read_video(video_path: str, start_frame: int = 0,
             f'start_frame must be between 0 and {total_frames - 1}')
 
     if frames_count is None:
-        frames_count = total_frames - start_frame
-    elif frames_count <= 0 or start_frame + frames_count > total_frames:
+        frames_count = (total_frames - start_frame) // frame_stride
+    elif frames_count <= 0 or start_frame + frames_count * frame_stride > total_frames:
         raise ValueError(
-            f'frames_count must be between 1 and {total_frames - start_frame}')
+            f'frames_count must be between 1 and {(total_frames - start_frame) // frame_stride}')
 
     # Calculate new dimensions while maintaining aspect ratio
     if max_side is not None:
@@ -107,8 +113,12 @@ def read_video(video_path: str, start_frame: int = 0,
 
         frames[i] = frame
 
+        # Skip frames according to stride
+        for _ in range(frame_stride - 1):
+            cap.read()
+
     cap.release()
-    return frames, fps
+    return frames, fps / frame_stride
 
 
 def convert_fps(frame_indexes: List[int], base_fps: int,

@@ -1,3 +1,8 @@
+v0.1.3
+-------
+- New show_video_in_jupyter
+- Added stride parameter to the read_video
+
 v0.1.2
 -------
 - Added convert_video_fps function to convert video frames between different frame rates

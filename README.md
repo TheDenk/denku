@@ -49,7 +49,14 @@ resized_max = resize_to_max_side(image, max_side=512)
 import denku
 
 # Read video frames
+# Read every frame
 frames, fps = denku.read_video("video.mp4")
+
+# Read every 2nd frame
+frames, fps = denku.read_video("video.mp4", frame_stride=2)
+
+# Read every 5th frame
+frames, fps = denku.read_video("video.mp4", frame_stride=5)
 
 # Convert video to different FPS
 converted_frames = denku.convert_video_fps(frames, original_fps=fps, target_fps=16)
