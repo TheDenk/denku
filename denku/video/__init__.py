@@ -303,6 +303,61 @@ def create_video_grid(
     print(f'Video grid successfully created at: {output_path}')
 
 
+def overlay_video(background_path, overlay_path, output_path, overlay_scale=0.3, x_offset=10, y_offset=10):
+    bg_cap = cv2.VideoCapture(background_path)
+    overlay_cap = cv2.VideoCapture(overlay_path)
+    
+    bg_width = int(bg_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    bg_height = int(bg_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = bg_cap.get(cv2.CAP_PROP_FPS)
+    
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (bg_width, bg_height))
+    
+    while True:
+        ret_bg, bg_frame = bg_cap.read()
+        ret_overlay, overlay_frame = overlay_cap.read()
+        
+        if not ret_bg or not ret_overlay:
+            break
+        
+        overlay_height, overlay_width = overlay_frame.shape[:2]
+        new_width = int(bg_width * overlay_scale)
+        new_height = int((new_width / overlay_width) * overlay_height)
+        overlay_resized = cv2.resize(overlay_frame, (new_width, new_height))
+        
+        bg_frame[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = overlay_resized
+        out.write(bg_frame)
+
+    bg_cap.release()
+    overlay_cap.release()
+    out.release()
+
+
+def concatenate_videos(input_paths, output_path):
+    first_video = cv2.VideoCapture(input_paths[0])
+    fps = first_video.get(cv2.CAP_PROP_FPS)
+    width = int(first_video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(first_video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    first_video.release()
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    for path in input_paths:
+        cap = cv2.VideoCapture(path)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if (frame.shape[1] != width) or (frame.shape[0] != height):
+                frame = cv2.resize(frame, (width, height))
+            out.write(frame)
+        cap.release()
+
+    out.release()
+
+
 def get_info_from_yolo_mark(file_path: str) -> Tuple[List[Tuple[int, int, int, int]], List[str]]:
     """Read YOLO mark annotation file.
 
