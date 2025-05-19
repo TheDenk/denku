@@ -358,6 +358,37 @@ def concatenate_videos(input_paths, output_path):
     out.release()
 
 
+def save_video_from_frames(frames, output_path, fps=30, codec='mp4v', input_format='rgb'):
+    """
+    Save frames as a video file.
+    
+    Args:
+        frames: List or np.array of frames
+        output_path: Output video file path
+        fps: Frames per second
+        codec: Video codec FourCC code
+        input_format: 'rgb' (default) or 'bgr'
+    """
+    if not frames:
+        return False
+    
+    height, width = frames[0].shape[:2]
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    
+    if not out.isOpened():
+        return False
+    
+    for frame in frames:
+        if input_format.lower() == 'rgb':
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            
+        out.write(frame)
+    
+    out.release()
+    return True
+
+
 def get_info_from_yolo_mark(file_path: str) -> Tuple[List[Tuple[int, int, int, int]], List[str]]:
     """Read YOLO mark annotation file.
 
