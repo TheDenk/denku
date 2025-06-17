@@ -277,3 +277,29 @@ def resize_to_max_side(input_image: np.ndarray, max_side: int,
     new_h, new_w = [int(x * coef) for x in [h, w]]
     image = cv2.resize(image, (new_w, new_h), interpolation=interpolation)
     return image
+
+
+def center_crop(img: np.ndarray, target_h: int, target_w: int) -> np.ndarray:
+    """
+    Crop the center of a numpy array image to target dimensions.
+    
+    Args:
+        img: Input image as numpy array (H, W, C) or (H, W)
+        target_h: Target height (must be <= image height)
+        target_w: Target width (must be <= image width)
+        
+    Returns:
+        Cropped center image as numpy array
+    """
+    h, w = img.shape[:2]
+    
+    if target_h > h or target_w > w:
+        raise ValueError(
+            f"Target dimensions ({target_h}, {target_w}) must be smaller than "
+            f"image dimensions ({h}, {w})"
+        )
+    
+    start_y = h // 2 - target_h // 2
+    start_x = w // 2 - target_w // 2
+    
+    return img[start_y:start_y + target_h, start_x:start_x + target_w]                           
