@@ -10,7 +10,12 @@ if TYPE_CHECKING:
         split_on_chunks,
         get_linear_value,
         get_cosine_value,
-        get_ema_value
+        get_ema_value,
+        get_boxes_intersection,
+        get_boxes_union,
+        get_boxes_iou,
+        get_boxes_iou_matrix,
+        get_info_from_yolo_mark
     )
     from denku.image import (
         download_image,
@@ -26,7 +31,9 @@ if TYPE_CHECKING:
         apply_divide_factor,
         resize_to_min_sides,
         resize_to_min_side,
-        resize_to_max_side
+        resize_to_max_side,
+        center_crop,
+        rotate_image
     )
     from denku.visualization import (
         show_image,
@@ -43,7 +50,10 @@ if TYPE_CHECKING:
         convert_fps,
         get_info_from_yolo_mark,
         create_video_grid,
-        convert_video_fps
+        convert_video_fps,
+        overlay_video,
+        concatenate_videos,
+        save_video_from_frames
     )
     from denku.memory import (
         get_module_parameters_count_m,
@@ -55,14 +65,16 @@ if TYPE_CHECKING:
         print_cuda_allocated_memory
     )
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 
 def __getattr__(name: str) -> object:
     """Lazy import of submodules."""
     if name in {
         'get_datetime', 'load_json', 'split_on_chunks', 'get_linear_value',
-        'get_cosine_value', 'get_ema_value', 'get_info_from_yolo_mark'
+        'get_cosine_value', 'get_ema_value', 'get_info_from_yolo_mark',
+        'get_boxes_intersection', 'get_boxes_union', 'get_boxes_iou',
+        'get_boxes_iou_matrix'
     }:
         from denku.utils import __dict__ as utils_dict
         return utils_dict[name]
@@ -72,7 +84,7 @@ def __getattr__(name: str) -> object:
         'merge_images_by_mask_with_gauss', 'get_color_mask_with_hsv',
         'get_mask_for_box', 'color_mask', 'change_contrast', 'clear_noise',
         'apply_divide_factor', 'resize_to_min_sides', 'resize_to_min_side',
-        'resize_to_max_side'
+        'resize_to_max_side', 'center_crop', 'rotate_image'
     }:
         from denku.image import __dict__ as image_dict
         return image_dict[name]
@@ -87,7 +99,8 @@ def __getattr__(name: str) -> object:
 
     if name in {
         'get_capture_info', 'read_video', 'convert_fps',
-        'create_video_grid', 'convert_video_fps'
+        'create_video_grid', 'convert_video_fps', 'overlay_video',
+        'concatenate_videos', 'save_video_from_frames'
     }:
         from denku.video import __dict__ as video_dict
         return video_dict[name]
