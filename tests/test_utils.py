@@ -8,6 +8,10 @@ from denku.utils import (
     get_cosine_value,
     get_ema_value
 )
+import pytest
+import numpy as np
+from unittest import mock
+from denku.visualization import show_images
 
 
 def test_get_datetime():
@@ -66,3 +70,64 @@ def test_get_ema_value():
     assert get_ema_value(1, 10, 0.5) == 5.0   # After one step
     assert get_ema_value(2, 10, 0.5) == 2.5   # After two steps
     assert get_ema_value(10, 10, 0.5) == 0.009765625  # After ten steps
+
+
+@pytest.fixture
+def color_image():
+    return np.ones((10, 10, 3), dtype=np.uint8) * 127
+
+
+@pytest.fixture
+def gray_image():
+    return np.ones((10, 10), dtype=np.uint8) * 127
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_global_title(mock_show, color_image):
+    show_images([color_image, color_image], n_rows=1,
+                global_title='Global Title')
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_titles(mock_show, color_image):
+    show_images([color_image, color_image], n_rows=1, titles=['A', 'B'])
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_both_titles(mock_show, color_image):
+    show_images([color_image, color_image], n_rows=1,
+                titles=['A', 'B'], global_title='Main')
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_neither_titles(mock_show, color_image):
+    show_images([color_image, color_image], n_rows=1)
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_single_image_global_title(mock_show, color_image):
+    show_images([color_image], n_rows=1, global_title='Single')
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_single_image_titles(mock_show, color_image):
+    show_images([color_image], n_rows=1, titles=['Only'])
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_padding(mock_show, color_image):
+    # 3 images, 2 rows, should pad to 4
+    show_images([color_image, color_image, color_image], n_rows=2)
+    mock_show.assert_called_once()
+
+
+@mock.patch('matplotlib.pyplot.show')
+def test_show_images_grayscale(mock_show, gray_image):
+    show_images([gray_image, gray_image], n_rows=1, global_title='Gray')
+    mock_show.assert_called_once()

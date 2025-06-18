@@ -1,3 +1,8 @@
+v0.1.4
+-------
+- Added center_crop and rotate_image
+- Refactored show_images to accept both titles (per-image subplot titles) and global_title (figure title) as separate, optional arguments. Neither is strictly required.
+
 v0.1.3
 -------
 - New show_video_in_jupyter

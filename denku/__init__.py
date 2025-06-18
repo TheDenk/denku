@@ -55,14 +55,14 @@ if TYPE_CHECKING:
         print_cuda_allocated_memory
     )
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 
 def __getattr__(name: str) -> object:
     """Lazy import of submodules."""
     if name in {
         'get_datetime', 'load_json', 'split_on_chunks', 'get_linear_value',
-        'get_cosine_value', 'get_ema_value'
+        'get_cosine_value', 'get_ema_value', 'get_info_from_yolo_mark'
     }:
         from denku.utils import __dict__ as utils_dict
         return utils_dict[name]
@@ -87,7 +87,7 @@ def __getattr__(name: str) -> object:
 
     if name in {
         'get_capture_info', 'read_video', 'convert_fps',
-        'get_info_from_yolo_mark', 'create_video_grid', 'convert_video_fps'
+        'create_video_grid', 'convert_video_fps'
     }:
         from denku.video import __dict__ as video_dict
         return video_dict[name]

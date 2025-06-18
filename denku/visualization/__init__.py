@@ -35,37 +35,72 @@ def show_image(image: np.ndarray, figsize: Tuple[int, int] = (5, 5),
     plt.show()
 
 
-def show_images(images: List[np.ndarray], n_rows: int = 1,
-                titles: Optional[Union[str, List[str]]] = None,
-                figsize: Tuple[int, int] = (5, 5),
-                cmap: Optional[str] = None,
-                xlabel: Optional[str] = None,
-                ylabel: Optional[str] = None,
-                axis: bool = False) -> None:
+def show_images(
+    images: List[np.ndarray],
+    n_rows: int = 1,
+    titles: Optional[List[str]] = None,
+    global_title: Optional[str] = None,
+    figsize: Tuple[int, int] = (5, 5),
+    cmap: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    axis: bool = False
+) -> None:
     """Display multiple images in a grid using matplotlib.
 
     Args:
-        images (List[np.ndarray]): List of images to display
-        n_rows (int, optional): Number of rows in grid. Defaults to 1.
-        titles (Optional[Union[str, List[str]]], optional): Plot titles. Defaults to None.
-        figsize (Tuple[int, int], optional): Figure size. Defaults to (5, 5).
-        cmap (Optional[str], optional): Colormap. Defaults to None.
-        xlabel (Optional[str], optional): X-axis label. Defaults to None.
-        ylabel (Optional[str], optional): Y-axis label. Defaults to None.
-        axis (bool, optional): Show axis. Defaults to False.
+        images (List[np.ndarray]): List of images to display. Each image should be of shape (H, W, C) or (H, W)
+            with values in range [0, 255]. All images should have the same number of channels.
+        n_rows (int, optional): Number of rows in the grid. Defaults to 1.
+            The number of columns will be calculated to fit all images.
+            If n_rows * n_cols > len(images), white padding images will be added.
+        titles (Optional[List[str]], optional): List of subplot titles, one per image. If shorter than images, remaining images get empty titles. If longer, excess titles are ignored. Defaults to None (no subplot titles).
+        global_title (Optional[str], optional): Title for the entire figure. Defaults to None.
+        figsize (Tuple[int, int], optional): Figure size in inches (width, height). Defaults to (5, 5).
+        cmap (Optional[str], optional): Colormap for single-channel images. Defaults to None.
+            Common values: 'gray', 'viridis', 'plasma', 'inferno', 'magma'.
+        xlabel (Optional[str], optional): X-axis label for all subplots. Defaults to None.
+        ylabel (Optional[str], optional): Y-axis label for all subplots. Defaults to None.
+        axis (bool, optional): Whether to show axis ticks and labels. Defaults to False.
+
+    Note:
+        - For single image display (n_rows=1, n_cols=1), falls back to show_image function
+        - For multiple images, creates a grid layout with n_rows rows
+        - The number of columns is calculated to fit all images (ceil(len(images) / n_rows))
+        - If there are fewer images than grid cells, white padding images will be added
+        - If global_title is provided, it is used as the figure's main title
+        - If titles is provided, it is used for subplot titles
+        - Both titles and global_title are optional
     """
-    n_cols = len(images) // n_rows
-    if n_rows == n_cols == 1:
-        if isinstance(titles, str) or titles is None:
-            title = titles
-        if isinstance(titles, list):
-            title = titles[0]
+    if n_rows == 1 and len(images) == 1:
+        # Single image: prefer global_title, else first title, else none
+        title = global_title if global_title is not None else (
+            titles[0] if titles and len(titles) > 0 else None)
         show_image(images[0], title=title, figsize=figsize,
                    cmap=cmap, xlabel=xlabel, ylabel=ylabel, axis=axis)
     else:
-        titles = titles if isinstance(titles, list) else [
-            '' for _ in range(len(images))]
+        n_cols = (len(images) + n_rows - 1) // n_rows
+        total_cells = n_rows * n_cols
+        # Prepare subplot titles
+        if titles is not None:
+            if len(titles) < total_cells:
+                titles = titles + [''] * (total_cells - len(titles))
+            else:
+                titles = titles[:total_cells]
+        else:
+            titles = [''] * total_cells
+        # Add white padding images if needed
+        if len(images) < total_cells:
+            h, w = images[0].shape[:2]
+            channels = 1 if images[0].ndim == 2 else images[0].shape[2]
+            padding_shape = (h, w) if channels == 1 else (h, w, channels)
+            white_padding = [np.full(padding_shape, 255, dtype=np.uint8)
+                             for _ in range(total_cells - len(images))]
+            images = images + white_padding
+        # Create figure and axes
         fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+        if global_title:
+            fig.suptitle(global_title, y=1.02)
         fig.tight_layout(pad=0.0)
         axes = axes.flatten()
         for index, ax in enumerate(axes):
@@ -77,7 +112,7 @@ def show_images(images: List[np.ndarray], n_rows: int = 1,
         plt.show()
 
 
-def show_video_in_jupyter(video_path, frame_delay=0.015):
+def show_video_in_jupyter(video_path: str, frame_delay: float = 0.015) -> None:
     """Display video frames in Jupyter notebook with frame-by-frame playback.
 
     Args:
@@ -197,17 +232,21 @@ def draw_box(input_image: np.ndarray, box: Tuple[int, int, int, int],
 
 
 def add_mask_on_image(image: np.ndarray, mask: np.ndarray,
-                      color: List[int], alpha: float = 0.9) -> np.ndarray:
+                      color: Tuple[int, int, int], alpha: float = 0.9) -> np.ndarray:
     """Add colored mask overlay on image.
 
     Args:
-        image (np.ndarray): Input image
-        mask (np.ndarray): Binary mask
-        color (List[int]): Mask color
-        alpha (float, optional): Blend factor. Defaults to 0.9.
+        image (np.ndarray): Input image of shape (H, W, 3) with values in range [0, 255]
+        mask (np.ndarray): Binary mask of shape (H, W) or (H, W, 1) with values 0 or 1
+        color (Tuple[int, int, int]): RGB color for the mask overlay
+        alpha (float, optional): Blend factor between 0 and 1. Defaults to 0.9.
 
     Returns:
-        np.ndarray: Image with mask overlay
+        np.ndarray: Image with mask overlay of shape (H, W, 3) with values in range [0, 255]
+
+    Note:
+        The mask will be automatically expanded to 3 channels if it's single-channel.
+        The output image maintains the same shape and data type as the input image.
     """
     color = np.array(color)
     original_mask = mask.copy()

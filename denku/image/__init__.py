@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 """Image processing utilities for the denku package."""
 
 import os
 import glob
-from typing import Tuple, List, Optional, Union
+from typing import Tuple, List, Optional, Union, Dict
 import numpy as np
 import cv2
 import PIL
@@ -11,10 +12,10 @@ import requests
 
 def download_image(url: str) -> np.ndarray:
     """Download image from URL and convert to RGB.
-    
+
     Args:
         url (str): URL of the image
-        
+
     Returns:
         np.ndarray: Downloaded and processed image
     """
@@ -27,15 +28,15 @@ def download_image(url: str) -> np.ndarray:
 def read_image(img_path: str, to_rgb: bool = True,
                flag: int = cv2.IMREAD_COLOR) -> np.ndarray:
     """Read image from file.
-    
+
     Args:
         img_path (str): Path to image
         to_rgb (bool, optional): Convert BGR to RGB. Defaults to True.
         flag (int, optional): OpenCV imread flag. Defaults to cv2.IMREAD_COLOR.
-        
+
     Returns:
         np.ndarray: Loaded image
-        
+
     Raises:
         FileNotFoundError: If image file not found
     """
@@ -49,12 +50,12 @@ def read_image(img_path: str, to_rgb: bool = True,
 
 def save_image(img: np.ndarray, file_path: str, mkdir: bool = False) -> bool:
     """Save image to file.
-    
+
     Args:
         img (np.ndarray): Image to save
         file_path (str): Path to save image
         mkdir (bool, optional): Create directory if not exists. Defaults to False.
-        
+
     Returns:
         bool: True if successful
     """
@@ -66,11 +67,11 @@ def save_image(img: np.ndarray, file_path: str, mkdir: bool = False) -> bool:
 
 def get_img_names(folder: str, img_format: str = 'png') -> List[str]:
     """Get list of image filenames in folder.
-    
+
     Args:
         folder (str): Folder path
         img_format (str, optional): Image format. Defaults to 'png'.
-        
+
     Returns:
         List[str]: List of image filenames
     """
@@ -79,11 +80,11 @@ def get_img_names(folder: str, img_format: str = 'png') -> List[str]:
     return img_names
 
 
-def merge_images_by_mask_with_gauss(bg_img: np.ndarray, src_img: np.ndarray, 
-                                  mask: np.ndarray, kernel: Tuple[int, int] = (7, 7),
-                                  sigma: float = 0.0, alpha: float = 0.5) -> np.ndarray:
+def merge_images_by_mask_with_gauss(bg_img: np.ndarray, src_img: np.ndarray,
+                                    mask: np.ndarray, kernel: Tuple[int, int] = (7, 7),
+                                    sigma: float = 0.0, alpha: float = 0.5) -> np.ndarray:
     """Merge two images using a mask with Gaussian blur.
-    
+
     Args:
         bg_img (np.ndarray): Background image
         src_img (np.ndarray): Source image
@@ -91,7 +92,7 @@ def merge_images_by_mask_with_gauss(bg_img: np.ndarray, src_img: np.ndarray,
         kernel (Tuple[int, int], optional): Gaussian kernel size. Defaults to (7, 7).
         sigma (float, optional): Gaussian sigma. Defaults to 0.0.
         alpha (float, optional): Blend factor. Defaults to 0.5.
-        
+
     Returns:
         np.ndarray: Merged image
     """
@@ -106,16 +107,22 @@ def merge_images_by_mask_with_gauss(bg_img: np.ndarray, src_img: np.ndarray,
 
 
 def get_color_mask_with_hsv(image: np.ndarray, COLOR_MIN: np.ndarray,
-                           COLOR_MAX: np.ndarray) -> np.ndarray:
+                            COLOR_MAX: np.ndarray) -> np.ndarray:
     """Get binary mask from HSV color range.
-    
+
     Args:
-        image (np.ndarray): Input RGB image
-        COLOR_MIN (np.ndarray): Minimum HSV values
-        COLOR_MAX (np.ndarray): Maximum HSV values
-        
+        image (np.ndarray): Input RGB image of shape (H, W, 3) with values in range [0, 255]
+        COLOR_MIN (np.ndarray): Minimum HSV values of shape (3,) with values in ranges:
+            H: [0, 179], S: [0, 255], V: [0, 255]
+        COLOR_MAX (np.ndarray): Maximum HSV values of shape (3,) with values in ranges:
+            H: [0, 179], S: [0, 255], V: [0, 255]
+
     Returns:
-        np.ndarray: Binary mask
+        np.ndarray: Binary mask of shape (H, W) with boolean values
+
+    Note:
+        The input image is converted from RGB to HSV color space before thresholding.
+        The output mask is True where the HSV values fall within the specified range.
     """
     out_img = image.copy()
     out_img = cv2.cvtColor(out_img, cv2.COLOR_RGB2HSV)
@@ -125,12 +132,12 @@ def get_color_mask_with_hsv(image: np.ndarray, COLOR_MIN: np.ndarray,
 
 def get_mask_for_box(img_h: int, img_w: int, box: Tuple[int, int, int, int]) -> np.ndarray:
     """Create binary mask from bounding box.
-    
+
     Args:
         img_h (int): Image height
         img_w (int): Image width
         box (Tuple[int, int, int, int]): Bounding box (x1, y1, x2, y2)
-        
+
     Returns:
         np.ndarray: Binary mask
     """
@@ -140,15 +147,16 @@ def get_mask_for_box(img_h: int, img_w: int, box: Tuple[int, int, int, int]) -> 
     return mask.astype(bool)
 
 
-def color_mask(mask: np.ndarray, colors: dict) -> np.ndarray:
+def color_mask(mask: np.ndarray, colors: Dict[int, Tuple[int, int, int]]) -> np.ndarray:
     """Color binary mask with specified colors.
-    
+
     Args:
-        mask (np.ndarray): Binary mask
-        colors (dict): Dictionary mapping mask values to RGB colors
-        
+        mask (np.ndarray): Binary mask of shape (H, W) with integer values
+        colors (Dict[int, Tuple[int, int, int]]): Dictionary mapping mask values to RGB colors
+            where keys are mask values and values are RGB tuples (R, G, B)
+
     Returns:
-        np.ndarray: Colored mask
+        np.ndarray: Colored mask of shape (H, W, 3) with RGB values
     """
     h, w = mask.shape[:2]
     colored_image = np.ones((h, w, 3)).astype(np.uint8)*255
@@ -159,11 +167,11 @@ def color_mask(mask: np.ndarray, colors: dict) -> np.ndarray:
 
 def change_contrast(input_img: np.ndarray, contrast: float = 0) -> np.ndarray:
     """Change image contrast.
-    
+
     Args:
         input_img (np.ndarray): Input image
         contrast (float, optional): Contrast value. Defaults to 0.
-        
+
     Returns:
         np.ndarray: Image with adjusted contrast
     """
@@ -177,12 +185,16 @@ def change_contrast(input_img: np.ndarray, contrast: float = 0) -> np.ndarray:
 
 def clear_noise(image: np.ndarray) -> np.ndarray:
     """Remove noise from binary image using morphological operations.
-    
+
     Args:
-        image (np.ndarray): Binary input image
-        
+        image (np.ndarray): Binary input image of shape (H, W) with values 0 or 255
+
     Returns:
-        np.ndarray: Cleaned image
+        np.ndarray: Cleaned binary image of shape (H, W) with values 0 or 255
+
+    Note:
+        This function applies erosion followed by dilation (opening operation)
+        to remove small noise artifacts from the binary image.
     """
     img = image.copy()
 
@@ -197,40 +209,40 @@ def clear_noise(image: np.ndarray) -> np.ndarray:
 
 def apply_divide_factor(x: int, divide_factor: int = 8, upward: bool = True) -> int:
     """Apply division factor to number.
-    
+
     Args:
         x (int): Input number
         divide_factor (int, optional): Division factor. Defaults to 8.
         upward (bool, optional): Round up if True, down if False. Defaults to True.
-        
+
     Returns:
         int: Processed number
     """
     if upward:
-        return (x // divide_factor + int(x % divide_factor != 0)) * divide_factor 
+        return (x // divide_factor + int(x % divide_factor != 0)) * divide_factor
     return x // divide_factor * divide_factor
 
 
 def resize_to_min_sides(input_image: np.ndarray, min_h: int, min_w: int) -> np.ndarray:
     """Resize image to have minimum sides.
-    
+
     Args:
         input_image (np.ndarray): Input image
         min_h (int): Minimum height
         min_w (int): Minimum width
-        
+
     Returns:
         np.ndarray: Resized image
     """
     image = np.array(input_image)
     img_h, img_w = image.shape[:2]
-    
+
     if img_h >= min_h and img_w >= min_w:
         coef = min(min_h / img_h, min_w / img_w)
     elif img_h <= min_h and img_w <= min_w:
         coef = max(min_h / img_h, min_w / img_w)
     else:
-        coef = min_h / img_h if min_h > img_h else min_w / img_w 
+        coef = min_h / img_h if min_h > img_h else min_w / img_w
 
     out_h, out_w = int(img_h * coef), int(img_w * coef)
     image = cv2.resize(image, (out_w, out_h))
@@ -240,7 +252,7 @@ def resize_to_min_sides(input_image: np.ndarray, min_h: int, min_w: int) -> np.n
 def resize_to_min_side(input_image: np.ndarray, min_side: int,
                        interpolation: int = cv2.INTER_CUBIC) -> np.ndarray:
     """Resize image to have minimum side.
-    
+
     Args:
         input_image (np.ndarray): Input image
         min_side (int): Minimum side
@@ -261,12 +273,12 @@ def resize_to_min_side(input_image: np.ndarray, min_side: int,
 def resize_to_max_side(input_image: np.ndarray, max_side: int,
                        interpolation: int = cv2.INTER_CUBIC) -> np.ndarray:
     """Resize image to have maximum side.
-    
+
     Args:
         input_image (np.ndarray): Input image
         max_side (int): Maximum side
         interpolation (int, optional): Interpolation method. Defaults to cv2.INTER_CUBIC.
-        
+
     Returns:
         np.ndarray: Resized image
     """
@@ -282,31 +294,46 @@ def resize_to_max_side(input_image: np.ndarray, max_side: int,
 def center_crop(img: np.ndarray, target_h: int, target_w: int) -> np.ndarray:
     """
     Crop the center of a numpy array image to target dimensions.
-    
+
     Args:
         img: Input image as numpy array (H, W, C) or (H, W)
         target_h: Target height (must be <= image height)
         target_w: Target width (must be <= image width)
-        
+
     Returns:
         Cropped center image as numpy array
     """
     h, w = img.shape[:2]
-    
+
     if target_h > h or target_w > w:
         raise ValueError(
-            f"Target dimensions ({target_h}, {target_w}) must be smaller than "
-            f"image dimensions ({h}, {w})"
+            f'Target dimensions ({target_h}, {target_w}) must be smaller than '
+            f'image dimensions ({h}, {w})'
         )
-    
+
     start_y = h // 2 - target_h // 2
     start_x = w // 2 - target_w // 2
-    
-    return img[start_y:start_y + target_h, start_x:start_x + target_w]                           
+
+    return img[start_y:start_y + target_h, start_x:start_x + target_w]
 
 
-def rotate_image(image, angle):
+def rotate_image(image: np.ndarray, angle: float) -> np.ndarray:
+    """Rotate an image by a specified angle around its center.
+
+    Args:
+        image (np.ndarray): Input image of shape (H, W, C) or (H, W) with values in range [0, 255]
+        angle (float): Rotation angle in degrees. Positive values rotate counter-clockwise.
+
+    Returns:
+        np.ndarray: Rotated image with the same shape and data type as the input image
+
+    Note:
+        The rotation is performed around the center of the image.
+        The output image maintains the same dimensions as the input image,
+        with black padding added where necessary.
+    """
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
     rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+    result = cv2.warpAffine(
+        image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
     return result

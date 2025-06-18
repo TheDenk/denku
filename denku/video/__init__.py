@@ -158,21 +158,30 @@ def create_video_grid(
     target_output_width: Optional[int] = None,
     target_output_height: Optional[int] = None,
     padding_color: Tuple[int, int, int] = (0, 0, 0)
-):
-    """
-    Create an NxN video grid.
+) -> None:
+    """Create a grid of videos arranged in rows and columns.
 
     Args:
-        input_videos: List of input video paths
-        output_path: Output video file path
-        grid_size: Tuple of (rows, cols) for the grid
-        target_duration: Duration in seconds for each video
-        fps: Output video frame rate
-        target_cell_width: Width for each grid cell
-        target_cell_height: Height for each grid cell
-        target_output_width: Total output width
-        target_output_height: Total output height
-        padding_color: Background color for padding (BGR format)
+        input_videos (List[str]): List of paths to input video files
+        output_path (str): Path where the output video grid will be saved
+        grid_size (Tuple[int, int], optional): Number of rows and columns in the grid. Defaults to (2, 2).
+        target_duration (float, optional): Target duration in seconds for each video. Defaults to 5.0.
+        fps (int, optional): Output video frame rate. Defaults to 30.
+        target_cell_width (Optional[int], optional): Target width for each grid cell. Defaults to None.
+        target_cell_height (Optional[int], optional): Target height for each grid cell. Defaults to None.
+        target_output_width (Optional[int], optional): Total output video width. Defaults to None.
+        target_output_height (Optional[int], optional): Total output video height. Defaults to None.
+        padding_color (Tuple[int, int, int], optional): BGR color for padding. Defaults to (0, 0, 0).
+
+    Raises:
+        ValueError: If any input video cannot be opened
+        ValueError: If grid dimensions are invalid
+
+    Note:
+        - If there are fewer videos than grid cells, the last video will be repeated
+        - If there are more videos than grid cells, excess videos will be ignored
+        - Videos will be resized to fit their grid cells while maintaining aspect ratio
+        - If target dimensions are not specified, they will be calculated based on input videos
     """
     rows, cols = grid_size
     total_cells = rows * cols
@@ -306,27 +315,28 @@ def create_video_grid(
 def overlay_video(background_path, overlay_path, output_path, overlay_scale=0.3, x_offset=10, y_offset=10):
     bg_cap = cv2.VideoCapture(background_path)
     overlay_cap = cv2.VideoCapture(overlay_path)
-    
+
     bg_width = int(bg_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     bg_height = int(bg_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = bg_cap.get(cv2.CAP_PROP_FPS)
-    
+
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (bg_width, bg_height))
-    
+
     while True:
         ret_bg, bg_frame = bg_cap.read()
         ret_overlay, overlay_frame = overlay_cap.read()
-        
+
         if not ret_bg or not ret_overlay:
             break
-        
+
         overlay_height, overlay_width = overlay_frame.shape[:2]
         new_width = int(bg_width * overlay_scale)
         new_height = int((new_width / overlay_width) * overlay_height)
         overlay_resized = cv2.resize(overlay_frame, (new_width, new_height))
-        
-        bg_frame[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = overlay_resized
+
+        bg_frame[y_offset:y_offset+new_height,
+                 x_offset:x_offset+new_width] = overlay_resized
         out.write(bg_frame)
 
     bg_cap.release()
@@ -361,7 +371,7 @@ def concatenate_videos(input_paths, output_path):
 def save_video_from_frames(frames, output_path, fps=30, codec='mp4v', input_format='rgb'):
     """
     Save frames as a video file.
-    
+
     Args:
         frames: List or np.array of frames
         output_path: Output video file path
@@ -371,48 +381,22 @@ def save_video_from_frames(frames, output_path, fps=30, codec='mp4v', input_form
     """
     if not frames:
         return False
-    
+
     height, width = frames[0].shape[:2]
     fourcc = cv2.VideoWriter_fourcc(*codec)
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-    
+
     if not out.isOpened():
         return False
-    
+
     for frame in frames:
         if input_format.lower() == 'rgb':
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            
+
         out.write(frame)
-    
+
     out.release()
     return True
-
-
-def get_info_from_yolo_mark(file_path: str) -> Tuple[List[Tuple[int, int, int, int]], List[str]]:
-    """Read YOLO mark annotation file.
-
-    Args:
-        file_path (str): Path to annotation file
-
-    Returns:
-        Tuple[List[Tuple[int, int, int, int]], List[str]]: Boxes and labels
-    """
-    boxes = []
-    labels = []
-
-    with open(file_path, 'r') as f:
-        for line in f:
-            class_id, x_center, y_center, width, height = map(
-                float, line.strip().split())
-            x1 = int(x_center - width/2)
-            y1 = int(y_center - height/2)
-            x2 = int(x_center + width/2)
-            y2 = int(y_center + height/2)
-            boxes.append((x1, y1, x2, y2))
-            labels.append(str(int(class_id)))
-
-    return boxes, labels
 
 
 def convert_video_fps(frames: np.ndarray, original_fps: float, target_fps: float) -> np.ndarray:
