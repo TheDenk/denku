@@ -365,3 +365,35 @@ def set_random_pixel_values(image: np.ndarray, alpha: float, value:int = 0) -> n
         coords = [np.random.randint(0, i, num_changed_pixels) for i in changed_image.shape[:2]]
         changed_image[coords[0], coords[1]] = [value] * changed_image.shape[2]
     return changed_image
+
+
+def paste_random_on_black_bg(
+    image: np.ndarray,
+    scale_range: tuple = (0.8, 1.0),
+) -> np.ndarray:
+    """
+    Randomly scales an image and pastes it at a random position on a black background.
+    
+    Args:
+        image: Input image as numpy array
+        scale_range: Tuple (min_scale, max_scale) for random scaling range (0.8 = 80% of original size)
+    
+    Returns:
+        Numpy array with the scaled image placed randomly on black background
+    """
+    background = np.zeros_like(image)
+    
+    scale = np.random.uniform(*scale_range)
+    orig_h, orig_w = image.shape[:2]
+    new_h, new_w = int(orig_h * scale), int(orig_w * scale)
+    
+    resized_img = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    
+    y_max = max(0, orig_h - new_h)
+    x_max = max(0, orig_w - new_w)
+    
+    pos_y = np.random.randint(0, y_max) if y_max > 0 else 0
+    pos_x = np.random.randint(0, x_max) if x_max > 0 else 0
+
+    background[pos_y:pos_y+new_h, pos_x:pos_x+new_w] = resized_img
+    return background
