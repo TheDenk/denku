@@ -337,3 +337,31 @@ def rotate_image(image: np.ndarray, angle: float) -> np.ndarray:
     result = cv2.warpAffine(
         image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
     return result
+
+
+def set_random_pixel_values(image: np.ndarray, alpha: float, value:int = 0) -> np.ndarray:
+    """
+    Apply salt augmentation to a numpy image by adding white pixels randomly.
+    
+    Args:
+        image: Input image as a numpy array (H, W) or (H, W, C).
+        alpha: Percentage of pixels to replace with value (0.0 to 1.0).
+        valeu: Pixel value (For example: 255 - salt augmentation, 0 - paper augmentation)
+    
+    Returns:
+        Augmented image as numpy array with same shape as input.
+    """
+    if not (0 <= alpha <= 1):
+        raise ValueError("Alpha must be between 0 and 1")
+
+    changed_image = image.copy()
+    total_pixels = changed_image.size if changed_image.ndim == 2 else changed_image.shape[0] * changed_image.shape[1]
+    num_changed_pixels = int(alpha * total_pixels)
+    
+    if changed_image.ndim == 2: 
+        coords = [np.random.randint(0, i, num_changed_pixels) for i in changed_image.shape]
+        changed_image[coords[0], coords[1]] = value
+    else: 
+        coords = [np.random.randint(0, i, num_changed_pixels) for i in changed_image.shape[:2]]
+        changed_image[coords[0], coords[1]] = [value] * changed_image.shape[2]
+    return changed_image
