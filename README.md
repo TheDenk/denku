@@ -2,7 +2,7 @@
 
 Custom computer vision utilities for image and video processing, visualization, and memory management.
 
-
+[![PyPI Downloads](https://static.pepy.tech/badge/denku)](https://pepy.tech/projects/denku)
 ## Installation
 
 ### For Users
