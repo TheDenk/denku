@@ -436,3 +436,150 @@ def convert_video_fps(frames: np.ndarray, original_fps: float, target_fps: float
         out_frames[i] = frames[frame_idx]
 
     return out_frames
+
+def cut_video(input_path, output_path, start_point, end_point, input_in_seconds=True, 
+                      codec='mp4v', fps=None, show_progress=True):
+    cap = cv2.VideoCapture(input_path)
+    
+    if not cap.isOpened():
+        raise ValueError(f"Could not open video file: {input_path}")
+    
+    original_fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = total_frames / original_fps
+    
+    print(f"Video info: {total_frames} frames, {duration:.2f} seconds, {original_fps} FPS")
+    
+    if input_in_seconds:
+        start_frame = max(0, int(start_point * original_fps))
+        end_frame = min(total_frames - 1, int(end_point * original_fps))
+    else:
+        start_frame = max(0, int(start_point))
+        end_frame = min(total_frames - 1, int(end_point))
+    
+    if start_frame >= end_frame:
+        raise ValueError(f"Invalid range: start_frame ({start_frame}) >= end_frame ({end_frame})")
+    
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    output_fps = fps if fps is not None else original_fps
+    
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(output_path, fourcc, output_fps, (width, height))
+    
+    if not out.isOpened():
+        cap.release()
+        raise ValueError(f"Could not create output file: {output_path}")
+    
+    cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+    
+    try:
+        for frame_num in range(start_frame, end_frame + 1):
+            ret, frame = cap.read()
+            if not ret:
+                break
+                
+            out.write(frame)
+            
+            if show_progress and frame_num % 100 == 0:
+                progress = (frame_num - start_frame) / (end_frame - start_frame) * 100
+                print(f"Progress: {progress:.1f}%")
+                
+    finally:
+        cap.release()
+        out.release()
+    
+    output_duration = (end_frame - start_frame) / original_fps
+    print(f"Cut {output_duration:.2f} seconds of video")
+    print(f"Output saved to: {output_path}")
+    return True
+
+
+def crop_video(input_path, output_path, crop_coords, codec='mp4v', fps=None):
+    cap = cv2.VideoCapture(input_path)
+    
+    if not cap.isOpened():
+        print(f"Error: Could not open video file {input_path}")
+        return False
+    
+    original_fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    original_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    original_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    print(f"Video info: {original_width}x{original_height}, {total_frames} frames, {original_fps} FPS")
+    
+    x1, y1, x2, y2 = crop_coords
+    
+    x1 = max(0, min(x1, original_width - 1))
+    y1 = max(0, min(y1, original_height - 1))
+    x2 = max(x1 + 1, min(x2, original_width))
+    y2 = max(y1 + 1, min(y2, original_height))
+    
+    crop_width = x2 - x1
+    crop_height = y2 - y1
+    
+    if crop_width <= 0 or crop_height <= 0:
+        print("Error: Invalid crop coordinates - resulting width or height is zero")
+        cap.release()
+        return False
+    
+    print(f"Original dimensions: {original_width}x{original_height}")
+    print(f"Crop region: ({x1}, {y1}) to ({x2}, {y2})")
+    print(f"Cropped dimensions: {crop_width}x{crop_height}")
+    
+    output_fps = fps if fps is not None else original_fps
+    
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(output_path, fourcc, output_fps, (crop_width, crop_height))
+    
+    if not out.isOpened():
+        print(f"Error: Could not create output video file {output_path}")
+        cap.release()
+        return False
+    
+    print("Processing video...")
+    
+    frame_count = 0
+    while True:
+        ret, frame = cap.read()
+        
+        if not ret:
+            print(f"Reached end of video at frame {frame_count}")
+            break
+            
+        if frame is None or frame.size == 0:
+            print(f"Warning: Empty frame at position {frame_count}")
+            continue
+            
+        frame_height, frame_width = frame.shape[:2]
+        
+        if (x1 >= frame_width or x2 > frame_width or 
+            y1 >= frame_height or y2 > frame_height):
+            print(f"Warning: Crop coordinates out of bounds for frame {frame_count}")
+            print(f"Frame size: {frame_width}x{frame_height}, Crop: ({x1},{y1})-({x2},{y2})")
+            continue
+        
+        try:
+            cropped_frame = frame[y1:y2, x1:x2]
+            
+            if cropped_frame is None or cropped_frame.size == 0:
+                print(f"Warning: Empty crop result at frame {frame_count}")
+                continue
+                
+            out.write(cropped_frame)
+            frame_count += 1
+            
+            if frame_count % 100 == 0:
+                print(f"Processed {frame_count} frames")
+                
+        except Exception as e:
+            print(f"Error processing frame {frame_count}: {e}")
+            continue
+    
+    cap.release()
+    out.release()
+    
+    print(f"Video successfully cropped and saved to: {output_path}")
+    print(f"Processed {frame_count} frames out of {total_frames}")
+    return True
