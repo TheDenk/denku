@@ -88,3 +88,79 @@ def print_cuda_allocated_memory() -> None:
     if torch.cuda.is_available():
         print(f'Allocated: {get_current_cuda_allocated_memory_gb():.2f} GB')
         print(f'Cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB')
+
+def print_model_info(*models, model_names=None):
+    """
+    Print model parameters info.
+    Args:
+        *models: PyTorch models.
+        model_names [optional]: Model names for print (same len as models).
+    """
+    if model_names is None:
+        model_names = [f"Model_{i+1}" for i in range(len(models))]
+    elif len(model_names) != len(models):
+        raise ValueError("model_names should be the same amount as models.")
+
+    all_data = []
+    for model, name in zip(models, model_names):
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        frozen_params = total_params - trainable_params
+        
+        dtype = next(model.parameters()).dtype
+        bytes_per_param = {torch.float32: 4, torch.float16: 2, torch.bfloat16: 2}.get(dtype, 4)
+        size_gb = total_params * bytes_per_param / (1024**3)
+        
+        all_data.append({
+            "name": name,
+            "dtype": str(dtype),
+            "total_params": total_params,
+            "trainable_params": trainable_params,
+            "frozen_params": frozen_params,
+            "size_gb": size_gb
+        })
+    
+    _print_combined_model_table(all_data)
+
+def _print_combined_model_table(models_data):
+    headers = ["Model", "Data type", "Total params", "Trainable", "Frozen", "Memory size"]
+    
+    table_data = []
+    for data in models_data:
+        row = [
+            data["name"],
+            data["dtype"],
+            f"{data['total_params'] / 1e6:.1f} M",
+            f"{data['trainable_params'] / 1e6:.1f} M",
+            f"{data['frozen_params'] / 1e6:.1f} M",
+            f"{data['size_gb']:.2f} GB"
+        ]
+        table_data.append(row)
+    
+    col_widths = []
+    for i in range(len(headers)):
+        max_width = max(len(str(row[i])) for row in table_data)
+        max_width = max(max_width, len(headers[i]))
+        col_widths.append(max_width + 2)  
+    
+    total_width = sum(col_widths) + len(headers) + 7
+    
+    print("\n" + "=" * total_width)
+    print("│", end="")
+    for header, width in zip(headers, col_widths):
+        print(f" {header:^{width}}│", end="")
+    print("\n" + "=" * total_width)
+    
+    for row in table_data:
+        print("│", end="")
+        for value, width in zip(row, col_widths):
+            print(f" {value:<{width}}│", end="")
+        print()
+    
+    print("=" * total_width)
+    total_params_all = sum(data["total_params"] for data in models_data)
+    trainable_params_all = sum(data["trainable_params"] for data in models_data)
+    
+    print(f"Total params: {total_params_all / 1e6:.1f} M.")
+    print(f"Trainable params: {trainable_params_all / 1e6:.1f} M / {trainable_params_all/total_params_all*100:.1f}% of total.")
+    
